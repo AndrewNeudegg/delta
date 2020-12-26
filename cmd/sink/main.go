@@ -5,51 +5,28 @@ import (
 	"os"
 	"sync"
 
-	"github.com/andrewneudegg/delta/pkg/probes"
+	"github.com/andrewneudegg/delta/cmd/common"
 	"github.com/andrewneudegg/delta/pkg/sink"
-	"github.com/andrewneudegg/delta/pkg/telemetry"
 	log "github.com/sirupsen/logrus"
 )
 
-func init() {
-	// log.SetReportCaller(true)
-	// Log as JSON instead of the default ASCII formatter.
-	// log.SetFormatter(&log.JSONFormatter{})
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors: false,
-		FullTimestamp: true,
-	})
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
-
-	// Only log the warning severity or above.
-	log.SetLevel(log.DebugLevel)
-}
-
 func main() {
-	// API that listens to anything.
+	common.LoggingInit()
+	probes := common.ProbesInit()
+	common.TelemetryInit()
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-
 	log.Info("starting application")
 
-	// --------- Probes
-	probes := probes.ProbeServer{
-		ListenAddr: ":8082",
-	}
-	go probes.StartProbeServer()
-	probes.AliveNow()
 	probes.ReadyNow()
+	app()
 
-	// --------- Telemetry
-	prometheusServer := telemetry.PrometheusServer{
-		ListenAddr: ":8081",
-		Route:      "",
-	}
-	go prometheusServer.Serve(context.TODO())
+	wg.Wait()
+	log.Warn("exiting application")
+}
 
-
+func app() {
 	mq := make(chan *sink.SunkMessage)
 
 	sinkServer, err := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
@@ -79,7 +56,4 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
-	wg.Wait()
-	log.Warn("exiting application")
 }
