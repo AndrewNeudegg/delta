@@ -4,7 +4,7 @@ import "context"
 
 // ServerConfiguration exposes configuration applicable to all sinks
 type ServerConfiguration struct {
-	ToChan chan *SunkMessage
+	ToChan chan<- *SunkMessage
 }
 
 // Server is the expectation for all sinks
