@@ -44,7 +44,7 @@ func main() {
 
 	mq := make(chan *sink.SunkMessage)
 
-	sinkServer, err := sink.NewHTTPSinkServer(&sink.HttpSinkServerConfiguration{
+	sinkServer, err := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
 		ServerConfiguration: sink.ServerConfiguration{
 			ToChan: mq,
 		},

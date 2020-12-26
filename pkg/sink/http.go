@@ -12,18 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type HttpSinkServerConfiguration struct {
+// HTTPSinkServerConfiguration represents the configuration for a http sink
+type HTTPSinkServerConfiguration struct {
 	ServerConfiguration
 	ListenAddr string
 }
 
 type httpSinkServer struct {
-	config *HttpSinkServerConfiguration
+	config *HTTPSinkServerConfiguration
 	server *http.Server
 }
 
 type httpSinkServerResponse struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("received '%s' at '%s%s'.", uniqueID, r.Host, r.RequestURI)
 	responseBytes, err := json.Marshal(httpSinkServerResponse{
-		Id: uniqueID,
+		ID: uniqueID,
 	})
 
 	if err != nil {
@@ -85,7 +86,8 @@ func (s *httpSinkServer) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func NewHTTPSinkServer(c *HttpSinkServerConfiguration) (Server, error) {
+// NewHTTPSinkServer is a factory method for http sink servers
+func NewHTTPSinkServer(c *HTTPSinkServerConfiguration) (Server, error) {
 	return &httpSinkServer{
 		config: c,
 	}, nil
