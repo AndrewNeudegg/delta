@@ -1,4 +1,4 @@
-// package common for all applications
+// Package common for all applications
 package common
 
 import (
