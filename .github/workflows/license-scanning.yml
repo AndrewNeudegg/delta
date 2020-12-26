@@ -1,4 +1,4 @@
-name: License Scanning
+name: license
 
 on:
   - pull_request

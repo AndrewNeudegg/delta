@@ -1,4 +1,4 @@
-name: quality
+name: coverage
 
 on:
   push:
