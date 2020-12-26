@@ -74,6 +74,22 @@ func TestSmoke(t *testing.T) {
 	time.Sleep(time.Second)
 }
 
+func TestSmokeFactory(t *testing.T) {
+	mq := make(chan *SunkMessage)
+	server, err := NewHTTPSinkServer(&HTTPSinkServerConfiguration{
+		ServerConfiguration: ServerConfiguration{
+			ToChan: mq,
+		},
+		ListenAddr:  ":8085",
+		MaxBodySize: 512,
+	})
+	assert.Nil(t, err)
+
+	go server.Serve(context.TODO())
+	defer server.Stop(context.TODO())
+	time.Sleep(time.Second)
+}
+
 func TestSendEvent(t *testing.T) {
 	addr := ":8085"
 	inputData := []SunkMessage{
