@@ -15,7 +15,8 @@ import (
 // HTTPSinkServerConfiguration represents the configuration for a http sink
 type HTTPSinkServerConfiguration struct {
 	ServerConfiguration
-	ListenAddr string
+	ListenAddr  string
+	MaxBodySize int64
 }
 
 type httpSinkServer struct {
@@ -51,10 +52,9 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
-	maxBodySize := 512
-	if len(body) > maxBodySize {
+	if int64(len(body)) > s.config.MaxBodySize {
 		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf("body too large, exceeded '%d' bytes", maxBodySize)))
+		rw.Write([]byte(fmt.Sprintf("body too large, exceeded '%d' bytes", s.config.MaxBodySize)))
 	}
 
 	if err != nil {

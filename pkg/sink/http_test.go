@@ -19,7 +19,8 @@ func getServer(mq chan<- *SunkMessage, listenAddr string) Server {
 			ServerConfiguration: ServerConfiguration{
 				ToChan: mq,
 			},
-			ListenAddr: listenAddr,
+			ListenAddr:  listenAddr,
+			MaxBodySize: 512, // 512 bytes
 		},
 	}
 }
@@ -104,8 +105,6 @@ func TestSendEvent(t *testing.T) {
 	sendResult, sendEventErr := sendEvent(addr, inputData)
 	assert.Nil(t, sendEventErr, "did not expect an error sending event")
 	assert.Equal(t, len(inputData), len(sendResult))
-
-	server.Stop(context.TODO())
 }
 
 func TestSendEventWith2(t *testing.T) {
@@ -171,6 +170,39 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 	resp, err := http.Get("http://localhost:8085/hello/testing")
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, 400)
+}
+
+func TestVeryLargeBody(t *testing.T) {
+	addr := ":8085"
+	inputData := []SunkMessage{
+		{
+			MessageID:   str2ptr("empty"),
+			Host:        str2ptr("example.com"),
+			ContentType: str2ptr("application/json"),
+			UserAgent:   str2ptr("testing"),
+			URI:         str2ptr("/test/hello"),
+			Content:     str2ptrByte("70sAESz3wsZnqIp4tZ6sImidbjXbjBbYFmcayJDZC0GgyViA51jrWDIM0ePkS5RoA9SqhmoPkIoFy6cPw2DmINc7dby1gsXdWgZ33JoMzecz3Mmk2UDsLulfmrlEuYa7IEXLB34fx7pkCsm9NxjP1v6sRSp9IXSjw8W4Jo4Cc2KeIYkECW3YP71Za7YznGXUHyeueP6qJ3MHgDUWutqRVhuG6wj7xR8rTFbVrFB7GLsqtuVQ7j6f4dkmOvDueh0EYA0uAq5we3hxI4eE1EguXe7y0EPr9FO93UcjzAIrT5thHBLnrQFBBHSzkpx04h84yRKjMhrfEN5JkxKe7MZzCiazNUcivmuGbrsh2aTsZEUVYBH8qZMxn3pBDQJK9vE38kV6Ew4Yyv6Z2eqC25ViguQ6PsNLzjo91mvJFnXSnZbPCiabXf68Vz3DBjVNxFM4uQuIkjG3le3To3EZiHKCDJ4uinD0ftyd31LBPfwiHO8SIfZMoxUqynRLhOaOXZG7LaM"),
+		},
+	}
+
+	mq := make(chan *SunkMessage)
+
+	sendResults := make([]SunkMessage, 0)
+	go func() {
+		for {
+			msg := <-mq
+			sendResults = append(sendResults, *msg)
+		}
+	}()
+
+	server := getServer(mq, addr)
+	defer server.Stop(context.TODO())
+	go server.Serve(context.TODO())
+	time.Sleep(time.Second)
+
+	sendResult, sendEventErr := sendEvent(addr, inputData)
+	assert.NotNil(t, sendEventErr, "expected an error sending event")
+	assert.Equal(t, 0, len(sendResult))
 }
 
 func str2ptr(a string) *string {

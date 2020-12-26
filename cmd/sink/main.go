@@ -49,6 +49,7 @@ func main() {
 			ToChan: mq,
 		},
 		ListenAddr: ":8080",
+		MaxBodySize: 2097152, // two Mebibytes
 	})
 
 	if err != nil {
