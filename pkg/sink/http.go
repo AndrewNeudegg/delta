@@ -13,7 +13,7 @@ import (
 )
 
 type HttpSinkServerConfiguration struct {
-	SinkServerConfiguration
+	ServerConfiguration
 	ListenAddr string
 }
 
@@ -62,7 +62,7 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.config.SinkServerConfiguration.ToChan <- &SunkMessage{
+	s.config.ServerConfiguration.ToChan <- &SunkMessage{
 		MessageID:   &uniqueID,
 		Host:        &r.Host,
 		ContentType: &contentType,
@@ -85,7 +85,7 @@ func (s *httpSinkServer) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func NewHTTPSinkServer(c *HttpSinkServerConfiguration) (SinkServer, error) {
+func NewHTTPSinkServer(c *HttpSinkServerConfiguration) (Server, error) {
 	return &httpSinkServer{
 		config: c,
 	}, nil

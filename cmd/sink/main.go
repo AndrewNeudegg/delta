@@ -45,7 +45,7 @@ func main() {
 	mq := make(chan *sink.SunkMessage)
 
 	sinkServer, err := sink.NewHTTPSinkServer(&sink.HttpSinkServerConfiguration{
-		SinkServerConfiguration: sink.SinkServerConfiguration{
+		ServerConfiguration: sink.ServerConfiguration{
 			ToChan: mq,
 		},
 		ListenAddr: ":8080",
