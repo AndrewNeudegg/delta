@@ -1,7 +1,6 @@
 package probes
 
 import (
-	"fmt"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -9,9 +8,9 @@ import (
 
 // ProbeServer allows the application to state readiness and liveness independently.
 type ProbeServer struct {
-	isReady bool  // is the application ready?
-	isAlive bool  // is the application alive?
-	Port    int16 // what port will the liveness probe listen on?
+	isReady    bool   // is the application ready?
+	isAlive    bool   // is the application alive?
+	ListenAddr string // what port will the liveness probe listen on?
 }
 
 // ReadyNow states that this application is prepared to handle requests.
@@ -58,7 +57,7 @@ func (p *ProbeServer) StartProbeServer() {
 		return
 	})
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", p.Port), nil)
+	err := http.ListenAndServe(p.ListenAddr, nil)
 	if err != nil {
 		log.Error(err)
 	}

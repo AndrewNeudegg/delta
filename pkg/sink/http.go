@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
@@ -22,6 +24,10 @@ type HTTPSinkServerConfiguration struct {
 type httpSinkServer struct {
 	config *HTTPSinkServerConfiguration
 	server *http.Server
+
+	flowCounter            prometheus.Counter
+	flowCounterClientError prometheus.Counter
+	flowCounterServerError prometheus.Counter
 }
 
 type httpSinkServerResponse struct {
@@ -33,6 +39,7 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte("must http post to sink"))
+		s.flowCounterClientError.Inc()
 		return
 	}
 
@@ -48,6 +55,7 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		log.Error(err)
+		s.flowCounterServerError.Inc()
 		return
 	}
 
@@ -55,11 +63,14 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if int64(len(body)) > s.config.MaxBodySize {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(fmt.Sprintf("body too large, exceeded '%d' bytes", s.config.MaxBodySize)))
+		s.flowCounterClientError.Inc()
+		return
 	}
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		log.Error(err)
+		s.flowCounterServerError.Inc()
 		return
 	}
 
@@ -74,6 +85,7 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(http.StatusAccepted)
 	rw.Write(responseBytes)
+	s.flowCounter.Inc()
 	return
 }
 
@@ -88,7 +100,23 @@ func (s *httpSinkServer) Stop(ctx context.Context) error {
 
 // NewHTTPSinkServer is a factory method for http sink servers
 func NewHTTPSinkServer(c *HTTPSinkServerConfiguration) (Server, error) {
+
+	flowCounter := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "sink_msgs_received",
+	})
+
+	flowCounterClientError := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "sink_msgs_client_error",
+	})
+
+	flowCounterServerError := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "sink_msgs_server_error",
+	})
+
 	return &httpSinkServer{
-		config: c,
+		config:                 c,
+		flowCounter:            flowCounter,
+		flowCounterClientError: flowCounterClientError,
+		flowCounterServerError: flowCounterServerError,
 	}, nil
 }

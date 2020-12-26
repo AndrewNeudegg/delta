@@ -10,8 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
+
+type dummyCounter struct {
+	prometheus.Counter
+}
+
+func (d dummyCounter) Inc() {}
 
 func getServer(mq chan<- *SunkMessage, listenAddr string) Server {
 	return &httpSinkServer{
@@ -22,6 +29,9 @@ func getServer(mq chan<- *SunkMessage, listenAddr string) Server {
 			ListenAddr:  listenAddr,
 			MaxBodySize: 512, // 512 bytes
 		},
+		flowCounter: dummyCounter{},
+		flowCounterClientError: dummyCounter{},
+		flowCounterServerError: dummyCounter{},
 	}
 }
 

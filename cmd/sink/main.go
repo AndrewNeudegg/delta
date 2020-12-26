@@ -7,6 +7,7 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/probes"
 	"github.com/andrewneudegg/delta/pkg/sink"
+	"github.com/andrewneudegg/delta/pkg/telemetry"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,14 +34,21 @@ func main() {
 
 	log.Info("starting application")
 
-	// Probes
+	// --------- Probes
 	probes := probes.ProbeServer{
-		Port: 8082,
+		ListenAddr: ":8082",
 	}
 	go probes.StartProbeServer()
-
 	probes.AliveNow()
 	probes.ReadyNow()
+
+	// --------- Telemetry
+	prometheusServer := telemetry.PrometheusServer{
+		ListenAddr: ":8081",
+		Route:      "",
+	}
+	go prometheusServer.Serve(context.TODO())
+
 
 	mq := make(chan *sink.SunkMessage)
 
@@ -48,7 +56,7 @@ func main() {
 		ServerConfiguration: sink.ServerConfiguration{
 			ToChan: mq,
 		},
-		ListenAddr: ":8080",
+		ListenAddr:  ":8080",
 		MaxBodySize: 2097152, // two Mebibytes
 	})
 

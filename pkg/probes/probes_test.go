@@ -16,7 +16,7 @@ func Test_healthprobes(t *testing.T) {
 	}
 
 	probeServer := ProbeServer{
-		Port: 8080,
+		ListenAddr: ":8080",
 	}
 
 	// server not launched yet
