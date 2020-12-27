@@ -1,3 +1,3 @@
-# Sink
+# Bridge
 
-A sink is for when you wish other applications to push data into the eventing system, such as curl.
+A bridge is for when you wish to pull data into the eventing system from an external source, such as a queue.
