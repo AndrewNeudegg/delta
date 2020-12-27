@@ -6,6 +6,7 @@ import (
 
 	"github.com/andrewneudegg/delta/cmd/bridge/apputil"
 	"github.com/andrewneudegg/delta/cmd/bridge/subcmd/example"
+	"github.com/andrewneudegg/delta/cmd/bridge/subcmd/simulator"
 	"github.com/andrewneudegg/delta/pkg/probes"
 	"github.com/andrewneudegg/delta/pkg/telemetry"
 	log "github.com/sirupsen/logrus"
@@ -89,5 +90,6 @@ func app() error {
 	rootCmd.PersistentFlags().BoolVarP(&probesEnabled, "probes", "", false, "liveness / readiness probes")
 
 	rootCmd.AddCommand(example.Cmd(&appState))
+	rootCmd.AddCommand(simulator.Cmd(&appState))
 	return rootCmd.Execute()
 }
