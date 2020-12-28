@@ -1,10 +1,14 @@
 package sink
 
-import "context"
+import (
+	"context"
+
+	"github.com/andrewneudegg/delta/pkg/events"
+)
 
 // ServerConfiguration exposes configuration applicable to all sinks
 type ServerConfiguration struct {
-	ToChan chan<- *SunkMessage
+	ToChan chan<- events.Event
 }
 
 // Server is the expectation for all sinks

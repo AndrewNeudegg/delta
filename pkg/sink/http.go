@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
@@ -43,8 +44,6 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userAgent := r.Header["User-Agent"][0]
-	contentType := r.Header["Content-Type"][0]
 	uniqueID := uuid.New().String()
 
 	log.Debugf("received '%s' at '%s%s'.", uniqueID, r.Host, r.RequestURI)
@@ -74,13 +73,11 @@ func (s *httpSinkServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.config.ServerConfiguration.ToChan <- &SunkMessage{
-		MessageID:   &uniqueID,
-		Host:        &r.Host,
-		ContentType: &contentType,
-		UserAgent:   &userAgent,
-		URI:         &r.RequestURI,
-		Content:     &body,
+	s.config.ServerConfiguration.ToChan <- events.EventMsg{
+		ID:      uniqueID,
+		Headers: r.Header,
+		URI:     r.RequestURI,
+		Content: body,
 	}
 
 	rw.WriteHeader(http.StatusAccepted)

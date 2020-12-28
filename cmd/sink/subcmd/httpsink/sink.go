@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/sink"
 	"github.com/andrewneudegg/delta/pkg/utils"
 
@@ -60,7 +61,7 @@ func httpSink(opts *httpSinkOpts) {
 	log.Debugf("Running http sink with config: %+v", opts)
 
 	log.Info("here")
-	mq := make(chan *sink.SunkMessage)
+	mq := make(chan events.Event)
 
 	sinkServer, err := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
 		ServerConfiguration: sink.ServerConfiguration{

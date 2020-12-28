@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,55 +21,53 @@ type dummyCounter struct {
 
 func (d dummyCounter) Inc() {}
 
-func getServer(mq chan<- *SunkMessage, listenAddr string) Server {
+func getServer(mq chan<- events.Event, listenAddr string) Server {
 	return &httpSinkServer{
 		config: &HTTPSinkServerConfiguration{
 			ServerConfiguration: ServerConfiguration{
 				ToChan: mq,
 			},
 			ListenAddr:  listenAddr,
-			MaxBodySize: 512, // 512 bytes
+			MaxBodySize: 50, // 50 bytes
 		},
-		flowCounter: dummyCounter{},
+		flowCounter:            dummyCounter{},
 		flowCounterClientError: dummyCounter{},
 		flowCounterServerError: dummyCounter{},
 	}
 }
 
-func sendEvent(addr string, content []SunkMessage) ([]SunkMessage, error) {
-	resultantIDs := make([]SunkMessage, 0)
+func sendEvent(addr string, content []events.EventMsg) ([]events.Event, error) {
+	resultantIDs := make([]events.Event, 0)
 	client := &http.Client{}
 
 	for _, v := range content {
 		// override specifically for testing purposes
-		targetAddr := fmt.Sprintf("http://localhost%s%s", addr, *v.URI)
+		targetAddr := fmt.Sprintf("http://localhost%s%s", addr, v.GetURI())
 
-		req, err := http.NewRequest("POST", targetAddr, bytes.NewBuffer(*v.Content))
+		req, err := http.NewRequest("POST", targetAddr, bytes.NewBuffer(v.GetContent()))
 		if err != nil {
-			return []SunkMessage{}, err
+			return []events.Event{}, err
 		}
 
-		req.Header.Set("Content-Type", *v.ContentType)
-		req.Header.Set("User-Agent", *v.UserAgent)
-		req.Header.Set("Host", *v.Host)
+		req.Header = v.GetHeaders()
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return []SunkMessage{}, err
+			return []events.Event{}, err
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return []SunkMessage{}, err
+			return []events.Event{}, err
 		}
 
 		var result httpSinkServerResponse
 		err = json.Unmarshal(body, &result)
 		if err != nil {
-			return []SunkMessage{}, err
+			return []events.Event{}, err
 		}
 
-		v.MessageID = &result.ID
+		v.ID = result.ID
 		resultantIDs = append(resultantIDs, v)
 	}
 
@@ -76,7 +75,7 @@ func sendEvent(addr string, content []SunkMessage) ([]SunkMessage, error) {
 }
 
 func TestSmoke(t *testing.T) {
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 	server := getServer(mq, ":8085")
 
 	go server.Serve(context.TODO())
@@ -85,7 +84,7 @@ func TestSmoke(t *testing.T) {
 }
 
 func TestSmokeFactory(t *testing.T) {
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 	server, err := NewHTTPSinkServer(&HTTPSinkServerConfiguration{
 		ServerConfiguration: ServerConfiguration{
 			ToChan: mq,
@@ -102,24 +101,26 @@ func TestSmokeFactory(t *testing.T) {
 
 func TestSendEvent(t *testing.T) {
 	addr := ":8085"
-	inputData := []SunkMessage{
-		{
-			MessageID:   str2ptr("empty"),
-			Host:        str2ptr("example.com"),
-			ContentType: str2ptr("application/json"),
-			UserAgent:   str2ptr("testing"),
-			URI:         str2ptr("/test/hello"),
-			Content:     str2ptrByte("hello world"),
+	inputData := []events.EventMsg{
+		events.EventMsg{
+			ID: "example",
+			Headers: map[string][]string{
+				"Content-Type": []string{"application/json"},
+				"Host":         []string{"example.com"},
+				"User-Agent":   []string{"example"},
+			},
+			URI:     "/test/hello",
+			Content: []byte("hello world!"),
 		},
 	}
 
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 
-	sendResults := make([]SunkMessage, 0)
+	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
 			msg := <-mq
-			sendResults = append(sendResults, *msg)
+			sendResults = append(sendResults, msg)
 		}
 	}()
 
@@ -135,32 +136,36 @@ func TestSendEvent(t *testing.T) {
 
 func TestSendEventWith2(t *testing.T) {
 	addr := ":8085"
-	inputData := []SunkMessage{
-		{
-			MessageID:   str2ptr("empty"),
-			Host:        str2ptr("example.com"),
-			ContentType: str2ptr("application/json"),
-			UserAgent:   str2ptr("testing"),
-			URI:         str2ptr("/test/hello"),
-			Content:     str2ptrByte("hello world"),
+	inputData := []events.EventMsg{
+		events.EventMsg{
+			ID: "example",
+			Headers: map[string][]string{
+				"Content-Type": []string{"application/json"},
+				"Host":         []string{"example.com"},
+				"User-Agent":   []string{"example"},
+			},
+			URI:     "/test/hello1",
+			Content: []byte("hello world!"),
 		},
-		{
-			MessageID:   str2ptr("empty"),
-			Host:        str2ptr("example.com"),
-			ContentType: str2ptr("application/json"),
-			UserAgent:   str2ptr("testing"),
-			URI:         str2ptr("/test/hello"),
-			Content:     str2ptrByte("hello world"),
+		events.EventMsg{
+			ID: "example",
+			Headers: map[string][]string{
+				"Content-Type": []string{"application/json"},
+				"Host":         []string{"example.com"},
+				"User-Agent":   []string{"example"},
+			},
+			URI:     "/test/hello2",
+			Content: []byte("hello world!"),
 		},
 	}
 
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 
-	sendResults := make([]SunkMessage, 0)
+	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
 			msg := <-mq
-			sendResults = append(sendResults, *msg)
+			sendResults = append(sendResults, msg)
 		}
 	}()
 
@@ -178,13 +183,13 @@ func TestSendEventWith2(t *testing.T) {
 
 func TestGetOnDisallowedRoute(t *testing.T) {
 	addr := ":8085"
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 
-	sendResults := make([]SunkMessage, 0)
+	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
 			msg := <-mq
-			sendResults = append(sendResults, *msg)
+			sendResults = append(sendResults, msg)
 		}
 	}()
 
@@ -200,24 +205,26 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 
 func TestVeryLargeBody(t *testing.T) {
 	addr := ":8085"
-	inputData := []SunkMessage{
-		{
-			MessageID:   str2ptr("empty"),
-			Host:        str2ptr("example.com"),
-			ContentType: str2ptr("application/json"),
-			UserAgent:   str2ptr("testing"),
-			URI:         str2ptr("/test/hello"),
-			Content:     str2ptrByte("70sAESz3wsZnqIp4tZ6sImidbjXbjBbYFmcayJDZC0GgyViA51jrWDIM0ePkS5RoA9SqhmoPkIoFy6cPw2DmINc7dby1gsXdWgZ33JoMzecz3Mmk2UDsLulfmrlEuYa7IEXLB34fx7pkCsm9NxjP1v6sRSp9IXSjw8W4Jo4Cc2KeIYkECW3YP71Za7YznGXUHyeueP6qJ3MHgDUWutqRVhuG6wj7xR8rTFbVrFB7GLsqtuVQ7j6f4dkmOvDueh0EYA0uAq5we3hxI4eE1EguXe7y0EPr9FO93UcjzAIrT5thHBLnrQFBBHSzkpx04h84yRKjMhrfEN5JkxKe7MZzCiazNUcivmuGbrsh2aTsZEUVYBH8qZMxn3pBDQJK9vE38kV6Ew4Yyv6Z2eqC25ViguQ6PsNLzjo91mvJFnXSnZbPCiabXf68Vz3DBjVNxFM4uQuIkjG3le3To3EZiHKCDJ4uinD0ftyd31LBPfwiHO8SIfZMoxUqynRLhOaOXZG7LaM"),
+	inputData := []events.EventMsg{
+		events.EventMsg{
+			ID: "example",
+			Headers: map[string][]string{
+				"Content-Type": []string{"application/json"},
+				"Host":         []string{"example.com"},
+				"User-Agent":   []string{"example"},
+			},
+			URI:     "/test/hello1",
+			Content: []byte("hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!"),
 		},
 	}
 
-	mq := make(chan *SunkMessage)
+	mq := make(chan events.Event)
 
-	sendResults := make([]SunkMessage, 0)
+	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
 			msg := <-mq
-			sendResults = append(sendResults, *msg)
+			sendResults = append(sendResults, msg)
 		}
 	}()
 

@@ -6,6 +6,14 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 )
 
+// ------------ RELAY -------------
+
+type R interface {
+	Do(context.Context, <-chan events.Event)
+}
+
+// ------------ / RELAY -------------
+
 // Server will serve events to requesting clients.
 type Server interface {
 	events.Distributor
