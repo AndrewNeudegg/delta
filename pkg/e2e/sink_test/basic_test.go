@@ -33,15 +33,14 @@ func TestSmoke(t *testing.T) {
 		ServerConfiguration: sink.ServerConfiguration{
 			ToChan: mq,
 		},
-		ListenAddr:  ":8080",
+		ListenAddr:  ":8090",
 		MaxBodySize: 2097152,
 	})
 	go sinkServer.Serve(context.TODO())
-	defer sinkServer.Stop(context.TODO())
 	time.Sleep(time.Second)
 
 	client := SinkClient{
-		Addr: "http://localhost:8080",
+		Addr: "http://localhost:8090",
 	}
 
 	for i := 0; i < numEvents; i++ {
@@ -55,4 +54,5 @@ func TestSmoke(t *testing.T) {
 
 	assert.Equal(t, "/test/hello", resultantEvents[0].GetURI())
 	assert.Equal(t, numEvents, len(resultantEvents))
+	sinkServer.Stop(context.Background())
 }
