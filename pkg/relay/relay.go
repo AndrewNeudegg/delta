@@ -8,8 +8,9 @@ import (
 
 // ------------ RELAY -------------
 
+// R is the relay interface, all relays should adhere to this.
 type R interface {
-	Do(context.Context, <-chan events.Event)
+	Do(context.Context, <-chan events.Event, )
 }
 
 // ------------ / RELAY -------------

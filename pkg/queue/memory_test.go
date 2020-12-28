@@ -96,7 +96,7 @@ func TestBulkRightN(t *testing.T) {
 	popedElems, err := q.PopN(len(elems))
 	assert.Nil(t, err)
 
-	for i, _ := range popedElems {
+	for i := range popedElems {
 		assert.Nil(t, err)
 		assert.Equal(t, popedElems[i].(Element).ID(), elems[i].ID())
 	}

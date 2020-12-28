@@ -6,6 +6,7 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 )
 
+// NoOpRelayOpts will write events to a channel.
 type NoOpRelayOpts struct {
 	Output chan<- events.Event
 }
@@ -25,6 +26,7 @@ func (n *noOpRelay) Do(ctx context.Context, msgCh <-chan events.Event) {
 	}
 }
 
+// NewNoOpRelay will return a relay that writes events back to a channel.
 func NewNoOpRelay(c *NoOpRelayOpts) R {
 	return &noOpRelay{
 		config:   c,
