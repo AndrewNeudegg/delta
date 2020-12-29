@@ -14,7 +14,7 @@ type Relay struct {
 
 // Do will pass events from a channel to a target, by looking them up.
 func (r Relay) Do(ctx context.Context, ch <-chan events.Event, p Phonebook) error {
-	for ctx.Err() != nil {
+	for ctx.Err() == nil {
 		e := <-ch
 		t, err := p.Lookup(e)
 		if err != nil {
