@@ -1,4 +1,4 @@
-package queue
+package _queue
 
 import (
 	"testing"

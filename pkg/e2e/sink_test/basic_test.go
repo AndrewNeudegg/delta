@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/andrewneudegg/delta/pkg/messaging/memory"
+	"github.com/andrewneudegg/delta/pkg/relay/memory"
 	"github.com/andrewneudegg/delta/pkg/sink"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,13 +27,9 @@ func TestE2EMemory(t *testing.T) {
 		}
 	}(distributedMessageChan)
 
-	// phonebook will route all events to the specified channel.
-	phonebook := memory.Phonebook{
-		Ch: distributedMessageChan,
-	}
 	// relay will route messages from incomingEvents to distributedMessages.
 	relay := memory.Relay{}
-	go relay.Do(context.TODO(), incomingEvents, phonebook)
+	go relay.Do(context.TODO(), incomingEvents, distributedMessageChan)
 
 	// sinkServer will catch all events.
 	sinkServer, _ := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
@@ -67,8 +63,6 @@ func TestE2EMemory(t *testing.T) {
 	// check that we received the right number of events...
 	assert.Equal(t, numEvents, len(distributedMessages))
 }
-
-
 
 // func TestSmoke(t *testing.T) {
 // 	mq := make(chan events.Event)

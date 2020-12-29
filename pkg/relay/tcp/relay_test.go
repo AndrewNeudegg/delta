@@ -10,41 +10,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type router struct {
+	protocol      string
+	sendAddress   string
+	listenAddress string
+}
+
+func (r router) Protocol() string {
+	return r.protocol
+}
+
+func (r router) SendAddress() string {
+	return r.sendAddress
+}
+
+func (r router) ListenAddress() string {
+	return r.listenAddress
+}
+
 func TestSmoke(t *testing.T) {
 
 	// outCh is where messages that will be relayed go.
-	outCh := make(chan events.Event)
+	outboundCh := make(chan events.Event)
 	// inboundChan is where messages that have been received go.
-	inboundChan := make(chan events.Event)
+	inboundCh := make(chan events.Event)
 	inboundResults := []events.Event{}
 
 	r := Relay{
-		protocol:    "tcp",
-		listenAddr:  ":8051",
-		inboundChan: inboundChan,
+		Opts: router{
+			protocol:      "tcp",
+			sendAddress:   "localhost:8050",
+			listenAddress: ":8050",
+		},
 	}
 
-	go r.Do(context.Background(), outCh, Phonebook{
-		KnownAddresses: []string{
-			"localhost:8051",
-		},
-	})
+	go func() {
+		err := r.Do(context.Background(), outboundCh, inboundCh)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	// start reading the arriving messages.
 	go func() {
 		for {
-			e := <-inboundChan
+			e := <-inboundCh
 			inboundResults = append(inboundResults, e)
 		}
 	}()
 
-	// await goroutines
-	time.Sleep(time.Second)
-
-	numEvents := 10000
+	numEvents := 100
 	for i := 0; i < numEvents; i++ {
 		count := fmt.Sprintf("%d", i)
-		outCh <- events.EventMsg{
+		outboundCh <- events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: []string{count},
@@ -55,7 +73,7 @@ func TestSmoke(t *testing.T) {
 	}
 
 	// messages can be deep in the tcp stack, lets give them a moment to catchup.
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 10)
 
 	assert.Equal(t, numEvents, len(inboundResults))
 }

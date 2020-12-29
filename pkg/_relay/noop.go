@@ -1,4 +1,4 @@
-package relay
+package _relay
 
 import (
 	"context"

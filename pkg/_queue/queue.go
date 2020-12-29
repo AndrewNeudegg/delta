@@ -1,4 +1,4 @@
-package queue
+package _queue
 
 // Q is a any type of queue, memory, RPC, HTTP, Kafka, etc.
 type Q interface {
