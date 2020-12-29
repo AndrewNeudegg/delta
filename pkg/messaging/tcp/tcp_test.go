@@ -20,13 +20,13 @@ func TestSmoke(t *testing.T) {
 
 	r := Relay{
 		protocol:    "tcp",
-		listenAddr:  ":8080",
+		listenAddr:  ":8051",
 		inboundChan: inboundChan,
 	}
 
 	go r.Do(context.Background(), outCh, Phonebook{
 		KnownAddresses: []string{
-			"localhost:8080",
+			"localhost:8051",
 		},
 	})
 

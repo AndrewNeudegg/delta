@@ -21,7 +21,7 @@ func TestNaiveSmoke(t *testing.T) {
 		ServerConfiguration: sink.ServerConfiguration{
 			ToChan: inboundEventsCh,
 		},
-		ListenAddr:  ":8080",
+		ListenAddr:  ":8057",
 		MaxBodySize: 10000000,
 	})
 	go server.Serve(context.TODO())
@@ -37,7 +37,7 @@ func TestNaiveSmoke(t *testing.T) {
 
 	// configure the distributor.
 	n := Naive{
-		Addr: "http://localhost:8080",
+		Addr: "http://localhost:8057",
 	}
 	go n.Do(context.Background(), outboundEventsCh)
 
