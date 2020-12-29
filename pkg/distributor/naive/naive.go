@@ -1,4 +1,4 @@
-package distributor
+package naive
 
 import (
 	"bytes"
@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
+	"github.com/andrewneudegg/delta/pkg/distributor"
 )
 
 // Naive will pelt events at a single predefined address.
 type Naive struct {
-	Distributor
+	distributor.D
 	Addr string // Addr to send events to (http://localhost:8080).
 }
 
