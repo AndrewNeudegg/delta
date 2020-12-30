@@ -8,4 +8,5 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v0.0.7
 	github.com/stretchr/testify v1.6.1
+	gopkg.in/yaml.v2 v2.3.0
 )
