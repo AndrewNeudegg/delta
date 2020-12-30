@@ -1,4 +1,4 @@
-package sink
+package http
 
 import (
 	"bytes"
@@ -11,34 +11,23 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/andrewneudegg/delta/pkg/source"
 	"github.com/stretchr/testify/assert"
 )
 
-type dummyCounter struct {
-	prometheus.Counter
-}
-
-func (d dummyCounter) Inc() {}
-
-func getServer(mq chan<- events.Event, listenAddr string) Server {
-	return &httpSinkServer{
-		config: &HTTPSinkServerConfiguration{
-			ServerConfiguration: ServerConfiguration{
-				ToChan: mq,
-			},
-			ListenAddr:  listenAddr,
-			MaxBodySize: 50, // 50 bytes
-		},
-		flowCounter:            dummyCounter{},
-		flowCounterClientError: dummyCounter{},
-		flowCounterServerError: dummyCounter{},
+// newServer will get a new sink server.
+func newServer(listenAddr string, maxBodySize int) source.S {
+	return &Sink{
+		ListenAddr:  listenAddr,
+		MaxBodySize: maxBodySize,
 	}
 }
 
 func sendEvent(addr string, content []events.EventMsg) ([]events.Event, error) {
 	resultantIDs := make([]events.Event, 0)
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 15,
+	}
 
 	for _, v := range content {
 		// override specifically for testing purposes
@@ -75,67 +64,64 @@ func sendEvent(addr string, content []events.EventMsg) ([]events.Event, error) {
 }
 
 func TestSmoke(t *testing.T) {
-	mq := make(chan events.Event)
-	server := getServer(mq, ":8085")
+	ch := make(chan events.Event)
+	server := newServer(":8074", 512)
 
-	go server.Serve(context.TODO())
-	defer server.Stop(context.TODO())
-	time.Sleep(time.Second)
-}
-
-func TestSmokeFactory(t *testing.T) {
-	mq := make(chan events.Event)
-	server, err := NewHTTPSinkServer(&HTTPSinkServerConfiguration{
-		ServerConfiguration: ServerConfiguration{
-			ToChan: mq,
-		},
-		ListenAddr:  ":8085",
-		MaxBodySize: 512,
-	})
-	assert.Nil(t, err)
-
-	go server.Serve(context.TODO())
-	defer server.Stop(context.TODO())
+	go server.Do(context.TODO(), ch)
 	time.Sleep(time.Second)
 }
 
 func TestSendEvent(t *testing.T) {
-	addr := ":8085"
+	addr := ":8073"
+
+	// ------- Setup -------
+	ch := make(chan events.Event)
+	sendResults := make([]events.Event, 0)
+	go func(ch chan events.Event) {
+		for {
+			msg := <-ch
+			sendResults = append(sendResults, msg)
+		}
+	}(ch)
+	time.Sleep(time.Second)
+
+	server := newServer(addr, 512)
+	go server.Do(context.TODO(), ch)
+	time.Sleep(time.Second)
+	// ------- Test --------
+
 	inputData := []events.EventMsg{
-		events.EventMsg{
+		{
 			ID: "example",
 			Headers: map[string][]string{
-				"Content-Type": []string{"application/json"},
-				"Host":         []string{"example.com"},
-				"User-Agent":   []string{"example"},
+				"Content-Type": {"application/json"},
+				"Host":         {"example.com"},
+				"User-Agent":   {"example"},
 			},
 			URI:     "/test/hello",
 			Content: []byte("hello world!"),
 		},
 	}
 
-	mq := make(chan events.Event)
-
-	sendResults := make([]events.Event, 0)
-	go func() {
-		for {
-			msg := <-mq
-			sendResults = append(sendResults, msg)
-		}
-	}()
-
-	server := getServer(mq, addr)
-	defer server.Stop(context.TODO())
-	go server.Serve(context.TODO())
-	time.Sleep(time.Second)
-
 	sendResult, sendEventErr := sendEvent(addr, inputData)
-	assert.Nil(t, sendEventErr, "did not expect an error sending event")
+	if sendEventErr != nil {
+		t.Fatal(sendEventErr)
+	}
+
+	time.Sleep(time.Second * 1)
 	assert.Equal(t, len(inputData), len(sendResult))
 }
 
 func TestSendEventWith2(t *testing.T) {
-	addr := ":8085"
+	addr := ":8072"
+
+	ch := make(chan events.Event)
+	server := newServer(addr, 512)
+	go func() {
+		err := server.Do(context.TODO(), ch)
+		assert.Nil(t, err)
+	}()
+
 	inputData := []events.EventMsg{
 		events.EventMsg{
 			ID: "example",
@@ -159,52 +145,55 @@ func TestSendEventWith2(t *testing.T) {
 		},
 	}
 
-	mq := make(chan events.Event)
-
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-mq
+			msg := <-ch
 			sendResults = append(sendResults, msg)
 		}
 	}()
 
-	server := getServer(mq, addr)
-	defer server.Stop(context.TODO())
-	go server.Serve(context.TODO())
 	time.Sleep(time.Second)
 
 	sendResult, sendEventErr := sendEvent(addr, inputData)
 	assert.Nil(t, sendEventErr, "did not expect an error sending event")
 	assert.Equal(t, len(inputData), len(sendResult))
-
-	server.Stop(context.TODO())
 }
 
 func TestGetOnDisallowedRoute(t *testing.T) {
-	addr := ":8085"
-	mq := make(chan events.Event)
+	addr := ":8075"
+
+	ch := make(chan events.Event)
+	server := newServer(addr, 512)
+	go func() {
+		err := server.Do(context.TODO(), ch)
+		assert.Nil(t, err)
+	}()
 
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-mq
+			msg := <-ch
 			sendResults = append(sendResults, msg)
 		}
 	}()
 
-	server := getServer(mq, addr)
-	defer server.Stop(context.TODO())
-	go server.Serve(context.TODO())
-
 	time.Sleep(time.Second)
-	resp, err := http.Get("http://localhost:8085/hello/testing")
+	resp, err := http.Get("http://localhost:8075/hello/testing")
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, 400)
 }
 
 func TestVeryLargeBody(t *testing.T) {
-	addr := ":8085"
+	addr := ":8076"
+
+	ch := make(chan events.Event)
+	server := newServer(addr, 10)
+	go func() {
+		err := server.Do(context.TODO(), ch)
+		assert.Nil(t, err)
+	}()
+
 	inputData := []events.EventMsg{
 		events.EventMsg{
 			ID: "example",
@@ -218,31 +207,17 @@ func TestVeryLargeBody(t *testing.T) {
 		},
 	}
 
-	mq := make(chan events.Event)
-
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-mq
+			msg := <-ch
 			sendResults = append(sendResults, msg)
 		}
 	}()
 
-	server := getServer(mq, addr)
-	defer server.Stop(context.TODO())
-	go server.Serve(context.TODO())
 	time.Sleep(time.Second)
 
 	sendResult, sendEventErr := sendEvent(addr, inputData)
 	assert.NotNil(t, sendEventErr, "expected an error sending event")
 	assert.Equal(t, 0, len(sendResult))
-}
-
-func str2ptr(a string) *string {
-	return &a
-}
-
-func str2ptrByte(a string) *[]byte {
-	thing := []byte(a)
-	return &thing
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/andrewneudegg/delta/pkg/sink"
+	"github.com/andrewneudegg/delta/pkg/source/sink/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,15 +17,11 @@ func TestNaiveSmoke(t *testing.T) {
 	outboundEventsCh := make(chan events.Event)
 
 	// Setup the dummy listener.
-	server, _ := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
-		ServerConfiguration: sink.ServerConfiguration{
-			ToChan: inboundEventsCh,
-		},
+	server := http.Sink{
 		ListenAddr:  ":8057",
 		MaxBodySize: 10000000,
-	})
-	go server.Serve(context.TODO())
-	defer server.Stop(context.Background())
+	}
+	go server.Do(context.TODO(), inboundEventsCh)
 	go func(ch chan events.Event) {
 		for {
 			inboundEvents = append(inboundEvents, <-ch)
@@ -61,7 +57,7 @@ func TestNaiveSmoke(t *testing.T) {
 	// there is a race condition between emission and verification.
 	// data ends up pooled in the channels so a sleep here allows
 	// the test to iron out the inconsistencies before returning.
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 2)
 
 	assert.Equal(t, numEvents, len(inboundEvents))
 }

@@ -8,7 +8,7 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/relay/memory"
-	"github.com/andrewneudegg/delta/pkg/sink"
+	"github.com/andrewneudegg/delta/pkg/source/sink/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,11 @@ func TestE2EMemory(t *testing.T) {
 	go relay.Do(context.TODO(), incomingEvents, distributedMessageChan)
 
 	// sinkServer will catch all events.
-	sinkServer, _ := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
-		ServerConfiguration: sink.ServerConfiguration{
-			ToChan: incomingEvents,
-		},
+	sinkServer := http.Sink{
 		ListenAddr:  ":8090",
 		MaxBodySize: 2097152,
-	})
-	go sinkServer.Serve(context.TODO())
+	}
+	go sinkServer.Do(context.TODO(), incomingEvents)
 
 	// pause for a bit in case we haven't context switches goroutines yet.
 	time.Sleep(time.Second)

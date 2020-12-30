@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/andrewneudegg/delta/pkg/sink"
+	"github.com/andrewneudegg/delta/pkg/source/sink/http"
 	"github.com/andrewneudegg/delta/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -63,17 +63,10 @@ func httpSink(opts *httpSinkOpts) {
 	log.Info("here")
 	mq := make(chan events.Event)
 
-	sinkServer, err := sink.NewHTTPSinkServer(&sink.HTTPSinkServerConfiguration{
-		ServerConfiguration: sink.ServerConfiguration{
-			ToChan: mq,
-		},
+	// todo: properly configure server and run tests.
+	server := http.Sink{
 		ListenAddr:  ":8080",
 		MaxBodySize: 2097152,
-	})
-
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
 	}
 
 	// just make the chan work...
@@ -84,7 +77,7 @@ func httpSink(opts *httpSinkOpts) {
 	}()
 
 	go func() {
-		err := sinkServer.Serve(context.TODO())
+		err := server.Do(context.TODO(), mq)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
