@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"context"
+
 	"github.com/andrewneudegg/delta/pkg/configuration"
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	distributorb "github.com/andrewneudegg/delta/pkg/distributor/builder"
@@ -9,6 +11,7 @@ import (
 	relayb "github.com/andrewneudegg/delta/pkg/relay/builder"
 	"github.com/andrewneudegg/delta/pkg/source"
 	sourceb "github.com/andrewneudegg/delta/pkg/source/builder"
+	log "github.com/sirupsen/logrus"
 )
 
 // Pipeline is the representation of data flow through this application.
@@ -55,6 +58,45 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	}
 
 	// Now we have constructed each of the nodes we must connect them.
+	// If we want to insert middleware, i.e. telemetry, this is
+	// probably the place to do it.
+	sourceChannels := []chan events.Event{}
+	for _, s := range p.sources {
+		thisSourceChan := make(chan events.Event)
+		go func(s source.S, ch chan events.Event) {
+			err := s.Do(context.TODO(), ch)
+			log.Error(err)
+		}(s, thisSourceChan)
+		sourceChannels = append(sourceChannels, thisSourceChan)
+	}
+
+	go func() {
+		fanIn(context.TODO(), sourceChannels, p.inCh)
+	}()
+
+	// --  --
+
+	var previousSourceOutput *chan events.Event
+	previousSourceOutput = &p.inCh
+	for _, r := range p.relays {
+		thisRelayOutputChan := make(chan events.Event)
+		go r.Do(context.TODO(), *previousSourceOutput, thisRelayOutputChan)
+		previousSourceOutput = &thisRelayOutputChan
+	}
+
+	distributorChannels := []chan events.Event{}
+	for _, d := range p.distributors {
+		distributorInputChannel := make(chan events.Event)
+		go func(d distributor.D, ch chan events.Event) {
+			err := d.Do(context.TODO(), ch)
+			log.Error(err)
+		}(d, distributorInputChannel)
+		distributorChannels = append(distributorChannels, distributorInputChannel)
+	}
+
+	go func() {
+		fanOut(context.TODO(), *previousSourceOutput, distributorChannels)
+	}()
 
 	return p, nil
 }

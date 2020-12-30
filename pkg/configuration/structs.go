@@ -9,7 +9,7 @@ type Container struct {
 	// RelayConfigs defines the flow of data after being received.
 	RelayConfigs []NodeConfig `yaml:"relayConfigs"`
 	// DistributorConfigs defines the behaviour of distribution mechanisms.
-	DistributorConfigs []NodeConfig `mapstructure:"distributorConfigurations"`
+	DistributorConfigs []NodeConfig `yaml:"distributorConfigurations"`
 }
 
 // -------------------------------------------------------------------------------------
