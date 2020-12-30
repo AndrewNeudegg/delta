@@ -1,4 +1,3 @@
-// Package source
 package source
 
 import (
