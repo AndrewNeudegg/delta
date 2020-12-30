@@ -11,6 +11,7 @@ import (
 	sourceb "github.com/andrewneudegg/delta/pkg/source/builder"
 )
 
+// Pipeline is the representation of data flow through this application.
 type Pipeline struct {
 	inCh  chan events.Event // inCh merges all input channels into a singular channel.
 	outCh chan events.Event // outCh replicates events to all output channels.
@@ -20,6 +21,7 @@ type Pipeline struct {
 	distributors []distributor.D
 }
 
+// BuildPipeline will construct the pipeline at the core of delta.
 func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	p := Pipeline{
 		inCh:         make(chan events.Event),
