@@ -3,7 +3,7 @@ package configuration
 // Container wraps all subconfiguration
 type Container struct {
 	// ApplicationSettings apply to the whole app.
-	ApplicationSettings appSettings `yaml:"applicationSettings"`
+	ApplicationSettings AppSettings `yaml:"applicationSettings"`
 	// SourceConfigs defines the behaviours of sinks/bridges.
 	SourceConfigs []NodeConfig `yaml:"sourceConfigurations"`
 	// RelayConfigs defines the flow of data after being received.
@@ -15,7 +15,7 @@ type Container struct {
 // -------------------------------------------------------------------------------------
 
 // AppSettings is application level configuration.
-type appSettings struct{}
+type AppSettings struct{}
 
 // -------------------------------------------------------------------------------------
 
