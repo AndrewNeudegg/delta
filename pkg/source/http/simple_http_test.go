@@ -17,7 +17,7 @@ import (
 
 // newServer will get a new sink server.
 func newServer(listenAddr string, maxBodySize int) source.S {
-	return &SimpleHttpSink{
+	return &SimpleHTTPSink{
 		ListenAddr:  listenAddr,
 		MaxBodySize: maxBodySize,
 	}

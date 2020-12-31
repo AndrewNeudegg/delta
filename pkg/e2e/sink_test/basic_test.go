@@ -32,7 +32,7 @@ func TestE2EMemory(t *testing.T) {
 	go relay.Do(context.TODO(), incomingEvents, distributedMessageChan)
 
 	// sinkServer will catch all events.
-	sinkServer := http.SimpleHttpSink{
+	sinkServer := http.SimpleHTTPSink{
 		ListenAddr:  ":8090",
 		MaxBodySize: 2097152,
 	}

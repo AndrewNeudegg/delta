@@ -11,7 +11,7 @@ import (
 func Get(sourceName string, sourceConfiguration interface{}) (source.S, error) {
 	switch sourceName {
 	case "http/simple":
-		source := http.SimpleHttpSink{}
+		source := http.SimpleHTTPSink{}
 		err := mapstructure.Decode(sourceConfiguration, &source)
 		return source, err
 	}

@@ -64,7 +64,7 @@ func httpSink(opts *httpSinkOpts) {
 	mq := make(chan events.Event)
 
 	// todo: properly configure server and run tests.
-	server := http.SimpleHttpSink{
+	server := http.SimpleHTTPSink{
 		ListenAddr:  ":8080",
 		MaxBodySize: 2097152,
 	}

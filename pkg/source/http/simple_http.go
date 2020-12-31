@@ -20,7 +20,7 @@ type httpSinkServerResponse struct {
 }
 
 // HttpSink is a http server.
-type SimpleHttpSink struct {
+type SimpleHTTPSink struct {
 	source.S
 	ListenAddr  string
 	MaxBodySize int
@@ -30,14 +30,14 @@ type SimpleHttpSink struct {
 }
 
 // init this sink.
-func (s *SimpleHttpSink) init(ch chan<- events.Event) error {
+func (s *SimpleHTTPSink) init(ch chan<- events.Event) error {
 	s.inboundCh = ch
 	s.server = &http.Server{Addr: s.ListenAddr, Handler: s}
 	return nil
 }
 
 // ServeHTTP allows this to become a http server.
-func (s *SimpleHttpSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte("must http post to sink"))
@@ -83,7 +83,7 @@ func (s *SimpleHttpSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 // Do will init this component and start the listen and serve.
-func (s SimpleHttpSink) Do(ctx context.Context, ch chan<- events.Event) error {
+func (s SimpleHTTPSink) Do(ctx context.Context, ch chan<- events.Event) error {
 	err := s.init(ch)
 	if err != nil {
 		return err

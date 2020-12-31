@@ -17,7 +17,7 @@ func TestNaiveSmoke(t *testing.T) {
 	outboundEventsCh := make(chan events.Event)
 
 	// Setup the dummy listener.
-	server := http.SimpleHttpSink{
+	server := http.SimpleHTTPSink{
 		ListenAddr:  ":8057",
 		MaxBodySize: 10000000,
 	}

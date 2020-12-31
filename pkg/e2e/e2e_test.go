@@ -17,7 +17,7 @@ import (
 )
 
 func getSinkServer(listenAddr string, maxBodySize int) source.S {
-	server := http.SimpleHttpSink{
+	server := http.SimpleHTTPSink{
 		MaxBodySize: maxBodySize,
 		ListenAddr:  listenAddr,
 	}
