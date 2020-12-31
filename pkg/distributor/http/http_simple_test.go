@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/andrewneudegg/delta/pkg/source/sink/http"
+	"github.com/andrewneudegg/delta/pkg/source/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +17,7 @@ func TestNaiveSmoke(t *testing.T) {
 	outboundEventsCh := make(chan events.Event)
 
 	// Setup the dummy listener.
-	server := http.Sink{
+	server := http.SimpleHttpSink{
 		ListenAddr:  ":8057",
 		MaxBodySize: 10000000,
 	}

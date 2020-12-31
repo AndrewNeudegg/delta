@@ -1,6 +1,6 @@
 applicationSettings: {}
 sourceConfigurations:
-  - name: sink/http
+  - name: http/simple
     config:
       ListenAddr: :5050
       MaxBodySize: 512
@@ -8,6 +8,6 @@ relayConfigs:
   - name: memory
     config: {}
 distributorConfigurations:
-  - name: naive
+  - name: http/direct
     config:
       Addr: http://localhost:5051

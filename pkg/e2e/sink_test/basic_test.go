@@ -8,7 +8,7 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/relay/memory"
-	"github.com/andrewneudegg/delta/pkg/source/sink/http"
+	"github.com/andrewneudegg/delta/pkg/source/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +32,7 @@ func TestE2EMemory(t *testing.T) {
 	go relay.Do(context.TODO(), incomingEvents, distributedMessageChan)
 
 	// sinkServer will catch all events.
-	sinkServer := http.Sink{
+	sinkServer := http.SimpleHttpSink{
 		ListenAddr:  ":8090",
 		MaxBodySize: 2097152,
 	}

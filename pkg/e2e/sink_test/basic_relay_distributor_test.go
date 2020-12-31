@@ -12,12 +12,12 @@ import (
 	"github.com/andrewneudegg/delta/pkg/relay"
 	"github.com/andrewneudegg/delta/pkg/relay/memory"
 	"github.com/andrewneudegg/delta/pkg/source"
-	httpS "github.com/andrewneudegg/delta/pkg/source/sink/http"
+	httpS "github.com/andrewneudegg/delta/pkg/source/http"
 	"github.com/stretchr/testify/assert"
 )
 
 func getSinkServer(listenAddr string, maxBodySize int) source.S {
-	server := httpS.Sink{
+	server := httpS.SimpleHttpSink{
 		MaxBodySize: maxBodySize,
 		ListenAddr:  listenAddr,
 	}

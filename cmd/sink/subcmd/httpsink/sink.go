@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/andrewneudegg/delta/pkg/source/sink/http"
+	"github.com/andrewneudegg/delta/pkg/source/http"
 	"github.com/andrewneudegg/delta/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -64,7 +64,7 @@ func httpSink(opts *httpSinkOpts) {
 	mq := make(chan events.Event)
 
 	// todo: properly configure server and run tests.
-	server := http.Sink{
+	server := http.SimpleHttpSink{
 		ListenAddr:  ":8080",
 		MaxBodySize: 2097152,
 	}

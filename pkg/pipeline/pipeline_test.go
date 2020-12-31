@@ -13,7 +13,7 @@ func TestPipelineSmoke(t *testing.T) {
 		ApplicationSettings: configuration.AppSettings{},
 		SourceConfigs: []configuration.NodeConfig{
 			{
-				Name: "sink/http",
+				Name: "http/simple",
 				Config: map[string]interface{}{
 					"ListenAddr":  ":5080",
 					"MaxBodySize": 512,
@@ -43,7 +43,7 @@ func TestPipelineSmokeYaml(t *testing.T) {
 	config := []byte(`
 applicationSettings: {}
 sourceConfigurations:
-  - name: sink/http
+  - name: http/simple
     config:
       ListenAddr: :5080
       MaxBodySize: 512

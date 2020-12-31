@@ -13,11 +13,11 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/pipeline"
 	"github.com/andrewneudegg/delta/pkg/source"
-	"github.com/andrewneudegg/delta/pkg/source/sink/http"
+	"github.com/andrewneudegg/delta/pkg/source/http"
 )
 
 func getSinkServer(listenAddr string, maxBodySize int) source.S {
-	server := http.Sink{
+	server := http.SimpleHttpSink{
 		MaxBodySize: maxBodySize,
 		ListenAddr:  listenAddr,
 	}
@@ -44,7 +44,7 @@ func TestE2ESmoke(t *testing.T) {
 	config := []byte(`
 applicationSettings: {}
 sourceConfigurations:
-  - name: sink/http
+  - name: http/simple
     config:
       ListenAddr: :5050
       MaxBodySize: 512

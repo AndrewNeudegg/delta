@@ -3,10 +3,11 @@ package stdout
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	"github.com/andrewneudegg/delta/pkg/events"
+	log "github.com/sirupsen/logrus"
 )
 
 // Distributor is a std out writer.
@@ -19,7 +20,11 @@ func (d Distributor) Do(ctx context.Context, outbound <-chan events.Event) error
 	for ctx.Err() == nil {
 		select {
 		case e := <-outbound:
-			fmt.Printf("Event: '%s'\n", e.GetMessageID())
+			jsonBytes, err := json.Marshal(e)
+			if err != nil {
+				log.Error(err)
+			}
+			log.Info(string(jsonBytes))
 		case _ = <-ctx.Done():
 			break
 		}

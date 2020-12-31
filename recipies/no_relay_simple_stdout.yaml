@@ -1,0 +1,9 @@
+# This recipie passes event data from the sink to standard out.
+applicationSettings: {}
+sourceConfigurations:
+  - name: http/simple
+    config:
+      ListenAddr: :8080
+      MaxBodySize: 512
+distributorConfigurations:
+  - name: stdout
