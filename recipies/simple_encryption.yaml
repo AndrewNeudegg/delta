@@ -1,0 +1,26 @@
+applicationSettings: {}
+sourceConfigurations:
+  - name: http/simple
+    config:
+      ListenAddr: :8080
+      MaxBodySize: 512
+relayConfigs:
+  # Encrypt incomming data before passing it on.
+  - name: crypto/symmetric-simple
+    config:
+      Mode: encrypt
+      Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
+      HashPassword: true
+
+  - name: memory
+    config: {}
+
+  # Decrypt data before distributing it.
+  # TODO: Changing the password should result in failure!
+  - name: crypto/symmetric-simple
+    config:
+      Mode: decrypt
+      Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
+      HashPassword: true
+distributorConfigurations:
+  - name: stdout
