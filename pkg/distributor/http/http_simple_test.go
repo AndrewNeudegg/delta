@@ -1,4 +1,4 @@
-package naive
+package http
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func TestNaiveSmoke(t *testing.T) {
 	time.Sleep(time.Second)
 
 	// configure the distributor.
-	n := Naive{
+	n := DirectDistributor{
 		Addr: "http://localhost:8057",
 	}
 	go n.Do(context.Background(), outboundEventsCh)

@@ -28,7 +28,7 @@ func TestPipelineSmoke(t *testing.T) {
 		},
 		DistributorConfigs: []configuration.NodeConfig{
 			{
-				Name: "naive",
+				Name: "http/direct",
 				Config: map[string]interface{}{
 					"Addr": "5081",
 				},
@@ -51,7 +51,7 @@ relayConfigs:
   - name: memory
     config: {}
 distributorConfigurations:
-  - name: naive
+  - name: http/direct
     config:
       Addr: http://localhost:5080
 `)
@@ -59,7 +59,7 @@ distributorConfigurations:
 		ConfigData: config,
 	}
 	configContainer, err := c.Load()
+	assert.Nil(t, err)
 	_, err = BuildPipeline(configContainer)
-
 	assert.Nil(t, err)
 }

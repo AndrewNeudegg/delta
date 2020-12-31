@@ -52,7 +52,7 @@ relayConfigs:
   - name: memory
     config: {}
 distributorConfigurations:
-  - name: naive
+  - name: http/direct
     config:
       Addr: http://localhost:5051
 `)

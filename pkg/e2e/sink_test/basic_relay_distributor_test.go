@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
-	"github.com/andrewneudegg/delta/pkg/distributor/naive"
+	httpD "github.com/andrewneudegg/delta/pkg/distributor/http"
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/relay"
 	"github.com/andrewneudegg/delta/pkg/relay/memory"
 	"github.com/andrewneudegg/delta/pkg/source"
-	"github.com/andrewneudegg/delta/pkg/source/sink/http"
+	httpS "github.com/andrewneudegg/delta/pkg/source/sink/http"
 	"github.com/stretchr/testify/assert"
 )
 
 func getSinkServer(listenAddr string, maxBodySize int) source.S {
-	server := http.Sink{
+	server := httpS.Sink{
 		MaxBodySize: maxBodySize,
 		ListenAddr:  listenAddr,
 	}
@@ -29,7 +29,7 @@ func getMemoryRelay() relay.R {
 }
 
 func getDistributor(sendAddr string) distributor.D {
-	return naive.Naive{
+	return httpD.DirectDistributor{
 		Addr: sendAddr,
 	}
 }

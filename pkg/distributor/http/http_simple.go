@@ -1,4 +1,4 @@
-package naive
+package http
 
 import (
 	"bytes"
@@ -7,18 +7,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/distributor"
+	"github.com/andrewneudegg/delta/pkg/events"
 )
 
-// Naive will pelt events at a single predefined address.
-type Naive struct {
+// DirectDistributor will pelt events at a single predefined address.
+type DirectDistributor struct {
 	distributor.D
 	Addr string // Addr to send events to (http://localhost:8080).
 }
 
 // Do will make a http post at the given Addr.
-func (d Naive) Do(ctx context.Context, ch <-chan events.Event) error {
+func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error {
 
 	// broadcast the event to the specific endpoint/s.
 	broadcast := func(e events.Event) error {
