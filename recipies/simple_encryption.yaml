@@ -10,8 +10,7 @@ relayConfigs:
     config:
       Mode: encrypt
       Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
-      HashPassword: true
-
+      # EnvVar: EVENT_ENCYRPTION_PHRASE
   - name: memory
     config: {}
 
@@ -21,6 +20,7 @@ relayConfigs:
     config:
       Mode: decrypt
       Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
-      HashPassword: true
+      # EnvVar: EVENT_ENCYRPTION_PHRASE
+
 distributorConfigurations:
   - name: stdout

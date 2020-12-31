@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -34,12 +33,11 @@ const (
 type SimpleSymmetricCryptoRelay struct {
 	relay.R
 
-	Mode         string              // Mode encrypt/decrypt
-	Password     string              // Password is hardcoded in the config.
-	EnvVar       string              // EnvVar overrides Password with an environment variable.
-	HashPassword bool                // HashPassword will sha1 hash the password.
-	key          []byte              // key is the container for the password Todo: something more sensible with this.
-	direction    encryptionDirection // specifies if this is encryption or decryption.
+	Mode      string              // Mode encrypt/decrypt
+	Password  string              // Password is hardcoded in the config.
+	EnvVar    string              // EnvVar overrides Password with an environment variable.
+	key       []byte              // key is the container for the password Todo: something more sensible with this.
+	direction encryptionDirection // specifies if this is encryption or decryption.
 }
 
 func (r SimpleSymmetricCryptoRelay) actionMap(m map[string][]string) (map[string][]string, error) {
@@ -149,7 +147,7 @@ func (r SimpleSymmetricCryptoRelay) decrypt(key []byte, data []byte) ([]byte, er
 }
 
 // Do will pass messages through an intermediary that may perform operations on the data.
-func (r *SimpleSymmetricCryptoRelay) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (r SimpleSymmetricCryptoRelay) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
 
 	if r.EnvVar != "" {
 		r.Password = os.Getenv(r.EnvVar)
@@ -158,20 +156,10 @@ func (r *SimpleSymmetricCryptoRelay) Do(ctx context.Context, outbound <-chan eve
 		}
 	}
 
-	key := []byte{}
-	if r.HashPassword {
-		hasher := sha512.New()
-		hasher.Write(key)
-		key = hasher.Sum(nil)
-		key = key[:32]
-	} else {
-		key = []byte(r.Password)
+	if len(r.Password) != 32 {
+		return fmt.Errorf("key is incorrect size (%d != 32)", len(r.Password))
 	}
-
-	if len(key) != 32 {
-		return fmt.Errorf("key is incorrect size (%d != 32)", len(key))
-	}
-	r.key = key
+	r.key = []byte(r.Password)
 
 	switch r.Mode {
 	case "encrypt":
@@ -189,16 +177,19 @@ func (r *SimpleSymmetricCryptoRelay) Do(ctx context.Context, outbound <-chan eve
 			mHeaders, err := r.actionMap(e.GetHeaders())
 			if err != nil {
 				log.Error(errors.Wrapf(err, "failed to '%s' headers for event '%s'", r.Mode, e.GetMessageID()))
+				continue // halt, we cannot continue
 			}
 
 			mURI, err := r.actionString(e.GetURI())
 			if err != nil {
 				log.Error(errors.Wrapf(err, "failed to '%s' URI for event '%s'", r.Mode, e.GetMessageID()))
+				continue // halt, we cannot continue
 			}
 
 			mContent, err := r.actionContent(e.GetContent())
 			if err != nil {
 				log.Error(errors.Wrapf(err, "failed to '%s' content for event '%s'", r.Mode, e.GetMessageID()))
+				continue // halt, we cannot continue
 			}
 
 			inbound <- events.EventMsg{
