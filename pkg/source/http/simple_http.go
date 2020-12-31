@@ -19,7 +19,7 @@ type httpSinkServerResponse struct {
 	ID string `json:"id"` // ID is the response ID for this accepted event.
 }
 
-// HttpSink is a http server.
+// SimpleHTTPSink is a http server.
 type SimpleHTTPSink struct {
 	source.S
 	ListenAddr  string

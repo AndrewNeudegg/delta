@@ -59,14 +59,12 @@ func TestCryptoErrIfKeyWrong(t *testing.T) {
 func TestSmoke(t *testing.T) {
 	eN := SimpleSymmetricCryptoRelay{
 		Mode:         "encrypt",
-		Password:     "test-password-length",
-		HashPassword: true,
+		Password:     "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
 	}
 
 	dN := SimpleSymmetricCryptoRelay{
 		Mode:         "decrypt",
-		Password:     "test-password-length",
-		HashPassword: true,
+		Password:     "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
 	}
 
 	ch1 := make(chan events.Event)
