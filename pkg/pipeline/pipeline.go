@@ -16,9 +16,6 @@ import (
 
 // Pipeline is the representation of data flow through this application.
 type Pipeline struct {
-	inCh  chan events.Event // inCh merges all input channels into a singular channel.
-	outCh chan events.Event // outCh replicates events to all output channels.
-
 	sources      []source.S
 	relays       []relay.R
 	distributors []distributor.D
@@ -27,8 +24,6 @@ type Pipeline struct {
 // BuildPipeline will construct the pipeline at the core of delta.
 func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	p := Pipeline{
-		inCh:         make(chan events.Event),
-		outCh:        make(chan events.Event),
 		sources:      make([]source.S, 0),
 		distributors: make([]distributor.D, 0),
 	}
@@ -70,14 +65,16 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 		sourceChannels = append(sourceChannels, thisSourceChan)
 	}
 
+	// TODO: Use prometheus middleware here instead...
+	inCh := Inject(make(chan events.Event), NoopEventMiddleware("inbound"))
 	go func() {
-		fanIn(context.TODO(), sourceChannels, p.inCh)
+		fanIn(context.TODO(), sourceChannels, inCh)
 	}()
 
 	// --  --
 
 	var previousSourceOutput *chan events.Event
-	previousSourceOutput = &p.inCh
+	previousSourceOutput = &inCh
 	for _, r := range p.relays {
 		thisRelayOutputChan := make(chan events.Event)
 		go r.Do(context.TODO(), *previousSourceOutput, thisRelayOutputChan)
@@ -95,7 +92,8 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	}
 
 	go func() {
-		fanOut(context.TODO(), *previousSourceOutput, distributorChannels)
+		// TODO: Use prometheus middleware here instead...
+		fanOut(context.TODO(), Inject(*previousSourceOutput, NoopEventMiddleware("outbound")), distributorChannels)
 	}()
 
 	return p, nil
