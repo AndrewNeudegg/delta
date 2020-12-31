@@ -1,0 +1,13 @@
+applicationSettings: {}
+sourceConfigurations:
+  - name: sink/http
+    config:
+      ListenAddr: :5050
+      MaxBodySize: 512
+relayConfigs:
+  - name: memory
+    config: {}
+distributorConfigurations:
+  - name: naive
+    config:
+      Addr: http://localhost:5051

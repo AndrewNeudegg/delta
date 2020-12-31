@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"sync"
 
 	"github.com/andrewneudegg/delta/pkg/configuration"
 	"github.com/andrewneudegg/delta/pkg/distributor"
@@ -21,11 +22,19 @@ type Pipeline struct {
 	distributors []distributor.D
 }
 
+// Await blocks indefinitely.
+func (p Pipeline) Await() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	wg.Wait()
+}
+
 // BuildPipeline will construct the pipeline at the core of delta.
 func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	p := Pipeline{
 		sources:      make([]source.S, 0),
 		distributors: make([]distributor.D, 0),
+		relays:       make([]relay.R, 0),
 	}
 
 	for _, sConfig := range c.SourceConfigs {
