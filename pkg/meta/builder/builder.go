@@ -20,7 +20,7 @@ func Get(distributorName string, metaConfiguration interface{}) (meta.M, error) 
 		err := mapstructure.Decode(metaConfiguration, &m)
 		return m, err
 	case "meta/chaos/simple":
-		m := chaos.ChaosSimple{}
+		m := chaos.Simple{}
 		err := mapstructure.Decode(metaConfiguration, &m)
 		return m, err
 	}
