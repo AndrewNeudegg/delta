@@ -63,3 +63,31 @@ distributorConfigurations:
 	_, err = BuildPipeline(configContainer)
 	assert.Nil(t, err)
 }
+
+// func TestMetaPipelineYaml(t *testing.T) {
+// 	config := []byte(`
+// applicationSettings: {}
+// sourceConfigurations:
+//   - name: http/simple
+//     config:
+//       ListenAddr: :8080
+//       MaxBodySize: 512
+// relayConfigs:
+//   - name: meta/chaos/simple
+//     config:
+//     - name: memory
+//       config: {}
+// distributorConfigurations:
+//   - name: http/direct
+//     config:
+//       Addr: http://localhost:5080
+// `)
+
+// 	c := configuration.RawConfig{
+// 		ConfigData: config,
+// 	}
+// 	configContainer, err := c.Load()
+// 	assert.Nil(t, err)
+// 	_, err = BuildPipeline(configContainer)
+// 	assert.Nil(t, err)
+// }

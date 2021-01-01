@@ -9,6 +9,7 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	"github.com/andrewneudegg/delta/pkg/events"
+	"github.com/pkg/errors"
 )
 
 // DirectDistributor will pelt events at a single predefined address.
@@ -28,6 +29,7 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 			bytes.NewBuffer(e.GetContent()))
 
 		if err != nil {
+			e.Fail(errors.Wrap(err, "http request build failed"))
 			return err
 		}
 
@@ -38,7 +40,12 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 			Timeout: time.Second * 15,
 		}
 		_, err = client.Do(req)
-		return err
+		if err != nil {
+			e.Fail(errors.Wrap(err, "http request send failed"))
+		}
+
+		e.Complete()
+		return nil
 	}
 
 	// backoffRetry will help when things get bumpy...

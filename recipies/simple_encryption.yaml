@@ -15,7 +15,6 @@ relayConfigs:
     config: {}
 
   # Decrypt data before distributing it.
-  # TODO: Changing the password should result in failure!
   - name: crypto/symmetric-simple
     config:
       Mode: decrypt

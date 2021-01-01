@@ -21,6 +21,7 @@ type AppSettings struct{}
 
 // NodeConfig defines the configuration for any given pluggable structure.
 type NodeConfig struct {
-	Name   string                 `mapstructure:"name"`
-	Config map[string]interface{} `mapstructure:"sourceConfig"`
+	Name        string                 `yaml:"name"`
+	Config      map[string]interface{} `yaml:"config"`
+	NodeConfigs []*NodeConfig          `yaml:"nodeConfigs"`
 }

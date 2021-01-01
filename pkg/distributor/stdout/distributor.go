@@ -25,6 +25,7 @@ func (d Distributor) Do(ctx context.Context, outbound <-chan events.Event) error
 				log.Error(err)
 			}
 			log.Info(string(jsonBytes))
+			e.Complete()
 		case _ = <-ctx.Done():
 			break
 		}

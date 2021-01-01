@@ -61,6 +61,7 @@ distributorConfigurations:
 	}
 	configContainer, err := c.Load()
 	_, err = pipeline.BuildPipeline(configContainer)
+	time.Sleep(time.Second)
 	assert.Nil(t, err)
 
 	// ------

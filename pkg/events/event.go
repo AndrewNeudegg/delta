@@ -16,6 +16,9 @@ type Event interface {
 	GetURI() string                  // GetURI returns a HTTP like route.
 	GetContent() []byte              // GetContent returns the []byte content of the message.
 
+	Fail(error)
+	Complete()
+
 	// SetMessageID(string)            // SetMessageID will set the message id, mostly used for testing.
 	// SetHeaders(map[string][]string) // SetHeaders will set the headers, mostly used for testing.
 	// SetURI(string)                  // SetURI will set the URI, mostly used for testing.
@@ -28,6 +31,9 @@ type EventMsg struct {
 	Headers map[string][]string `json:"headers"`
 	URI     string              `json:"uri"`
 	Content []byte              `json:"content"`
+
+	FailFunc     *func(error)
+	CompleteFunc *func()
 }
 
 // ToJSON will convert an EventMsg to JSON.
@@ -59,6 +65,20 @@ func (e EventMsg) GetURI() string {
 // GetContent returns the []byte content of the message.
 func (e EventMsg) GetContent() []byte {
 	return e.Content
+}
+
+// Complete indicates that the given event has successfully been compelted.
+func (e EventMsg) Complete() {
+	if e.CompleteFunc != nil {
+		(*e.CompleteFunc)()
+	}
+}
+
+// Fail indicates that the given event has failed.
+func (e EventMsg) Fail(err error) {
+	if e.FailFunc != nil {
+		(*e.FailFunc)(err)
+	}
 }
 
 // FromJSON will load an EventMsg from JSON string.
