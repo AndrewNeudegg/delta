@@ -18,7 +18,7 @@ func (p Pipeline) buildR(nc configuration.NodeConfig) (relay.R, error) {
 func (p Pipeline) loopR(nc []configuration.NodeConfig) ([]relay.R, error) {
 	resultantrelays := make([]relay.R, 0)
 	for _, src := range nc {
-		if strings.HasPrefix(src.Name, "/meta/") {
+		if strings.HasPrefix(src.Name, "meta/") {
 
 			if src.SubConfigs == nil {
 				return resultantrelays, fmt.Errorf("meta rerelay '%s' specified but with no sub rerelays", src.Name)

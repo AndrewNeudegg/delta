@@ -18,7 +18,7 @@ func (p Pipeline) buildD(nc configuration.NodeConfig) (distributor.D, error) {
 func (p Pipeline) loopD(nc []configuration.NodeConfig) ([]distributor.D, error) {
 	resultantSources := make([]distributor.D, 0)
 	for _, src := range nc {
-		if strings.HasPrefix(src.Name, "/meta/") {
+		if strings.HasPrefix(src.Name, "meta/") {
 
 			if src.SubConfigs == nil {
 				return resultantSources, fmt.Errorf("meta resource '%s' specified but with no sub resources", src.Name)

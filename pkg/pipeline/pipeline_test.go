@@ -68,7 +68,7 @@ func TestMetaPipelineYaml(t *testing.T) {
 	config := []byte(`
 applicationSettings: {}
 sourceConfigurations:
-  - name: /meta/chaos/simple
+  - name: meta/chaos/simple
     config:
       FailChance: 0.0
     subConfigs:
@@ -77,14 +77,14 @@ sourceConfigurations:
           ListenAddr: :8080
           MaxBodySize: 512
 relayConfigs:
-  - name: /meta/chaos/simple
+  - name: meta/chaos/simple
     config:
       FailChance: 0.0
     subConfigs:
       - name: memory
         config: {}
 distributorConfigurations:
-  - name: /meta/chaos/simple
+  - name: meta/chaos/simple
     config:
       FailChance: 0.0
     subConfigs:
