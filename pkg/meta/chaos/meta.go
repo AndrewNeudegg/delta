@@ -2,7 +2,6 @@ package chaos
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
@@ -16,6 +15,45 @@ type Simple struct {
 	FailChance float32 // 0.5
 }
 
+// ----------- Substructs -----------
+type s struct {
+	source.S
+	m *Simple
+}
+
+func (s s) Do(ctx context.Context, ch chan<- events.Event) error {
+	return s.m.DoS(ctx, ch)
+}
+
+type r struct {
+	relay.R
+	m *Simple
+}
+
+func (r r) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+	return r.m.DoR(ctx, outbound, inbound)
+}
+
+type d struct {
+	distributor.D
+	m *Simple
+}
+
+func (d d) Do(ctx context.Context, ch <-chan events.Event) error {
+	return d.m.DoD(ctx, ch)
+}
+
+// ----------- Substructs -----------
+
+// S source intermediary.
+func (m Simple) S([]source.S) (source.S, error) { return s{m: &m}, nil }
+
+// R relay intermediary.
+func (m Simple) R([]relay.R) (relay.R, error) { return r{m: &m}, nil }
+
+// D distributor intermediary.
+func (m Simple) D([]distributor.D) (distributor.D, error) { return d{m: &m}, nil }
+
 func (m Simple) isChance(f float32) bool {
 	// rand.Float64() == 0.1, 0.5, 0.8
 	// if f == 0.1 (10% chance) then rand has to be above 0.9.
@@ -24,72 +62,78 @@ func (m Simple) isChance(f float32) bool {
 }
 
 // DoS will do S with some modification.
-func (m Simple) DoS(ctx context.Context, ch chan events.Event, s source.S) error {
-	nCh := make(chan events.Event)
-	go func() {
-		for {
-			select {
-			case e := <-ch:
-				if m.isChance(m.FailChance) {
-					e.Fail(fmt.Errorf("event was unlucky"))
-					continue
-				}
+func (m Simple) DoS(context.Context, chan<- events.Event) error {
+	return nil
 
-				// if its lucky then continue...
-				nCh <- e
-			case _ = <-ctx.Done():
-				return
-			}
-		}
-	}()
+	// nCh := make(chan events.Event)
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case e := <-ch:
+	// 			if m.isChance(m.FailChance) {
+	// 				e.Fail(fmt.Errorf("event was unlucky"))
+	// 				continue
+	// 			}
 
-	return s.Do(ctx, nCh)
+	// 			// if its lucky then continue...
+	// 			nCh <- e
+	// 		case _ = <-ctx.Done():
+	// 			return
+	// 		}
+	// 	}
+	// }()
+
+	// return s.Do(ctx, nCh)
 }
 
 // DoR will do R with some modification.
-func (m Simple) DoR(ctx context.Context, chOut chan events.Event, chIn chan events.Event, r relay.R) error {
-	nCh := make(chan events.Event)
+func (m Simple) DoR(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+	return nil
 
-	go func() {
-		for {
-			select {
-			case e := <-chOut:
-				if m.isChance(m.FailChance) {
-					e.Fail(fmt.Errorf("event was unlucky"))
-					continue
-				}
+	// nCh := make(chan events.Event)
 
-				// if its lucky then continue...
-				nCh <- e
-			case _ = <-ctx.Done():
-				return
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case e := <-chOut:
+	// 			if m.isChance(m.FailChance) {
+	// 				e.Fail(fmt.Errorf("event was unlucky"))
+	// 				continue
+	// 			}
 
-	return r.Do(ctx, nCh, chIn)
+	// 			// if its lucky then continue...
+	// 			nCh <- e
+	// 		case _ = <-ctx.Done():
+	// 			return
+	// 		}
+	// 	}
+	// }()
+
+	// return r.Do(ctx, nCh, chIn)
 }
 
 // DoD will do D with some modification.
-func (m Simple) DoD(ctx context.Context, ch chan events.Event, d distributor.D) error {
-	nCh := make(chan events.Event)
+func (m Simple) DoD(ctx context.Context, ch <-chan events.Event) error {
+	return nil
 
-	go func() {
-		for {
-			select {
-			case e := <-ch:
-				if m.isChance(m.FailChance) {
-					e.Fail(fmt.Errorf("event was unlucky"))
-					continue
-				}
+	// nCh := make(chan events.Event)
 
-				// if its lucky then continue...
-				nCh <- e
-			case _ = <-ctx.Done():
-				return
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case e := <-ch:
+	// 			if m.isChance(m.FailChance) {
+	// 				e.Fail(fmt.Errorf("event was unlucky"))
+	// 				continue
+	// 			}
 
-	return d.Do(ctx, nCh)
+	// 			// if its lucky then continue...
+	// 			nCh <- e
+	// 		case _ = <-ctx.Done():
+	// 			return
+	// 		}
+	// 	}
+	// }()
+
+	// return d.Do(ctx, nCh)
 }

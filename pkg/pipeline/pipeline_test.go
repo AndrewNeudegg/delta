@@ -64,30 +64,40 @@ distributorConfigurations:
 	assert.Nil(t, err)
 }
 
-// func TestMetaPipelineYaml(t *testing.T) {
-// 	config := []byte(`
-// applicationSettings: {}
-// sourceConfigurations:
-//   - name: http/simple
-//     config:
-//       ListenAddr: :8080
-//       MaxBodySize: 512
-// relayConfigs:
-//   - name: meta/chaos/simple
-//     config:
-//     - name: memory
-//       config: {}
-// distributorConfigurations:
-//   - name: http/direct
-//     config:
-//       Addr: http://localhost:5080
-// `)
+func TestMetaPipelineYaml(t *testing.T) {
+	config := []byte(`
+applicationSettings: {}
+sourceConfigurations:
+  - name: /meta/chaos/simple
+    config:
+      FailChance: 0.0
+    subConfigs:
+      - name: http/simple
+        config:
+          ListenAddr: :8080
+          MaxBodySize: 512
+relayConfigs:
+  - name: /meta/chaos/simple
+    config:
+      FailChance: 0.0
+    subConfigs:
+      - name: memory
+        config: {}
+distributorConfigurations:
+  - name: /meta/chaos/simple
+    config:
+      FailChance: 0.0
+    subConfigs:
+      - name: http/direct
+        config:
+          Addr: http://localhost:5080
+`)
 
-// 	c := configuration.RawConfig{
-// 		ConfigData: config,
-// 	}
-// 	configContainer, err := c.Load()
-// 	assert.Nil(t, err)
-// 	_, err = BuildPipeline(configContainer)
-// 	assert.Nil(t, err)
-// }
+	c := configuration.RawConfig{
+		ConfigData: config,
+	}
+	configContainer, err := c.Load()
+	assert.Nil(t, err)
+	_, err = BuildPipeline(configContainer)
+	assert.Nil(t, err)
+}

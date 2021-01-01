@@ -2,16 +2,14 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/andrewneudegg/delta/pkg/configuration"
 	"github.com/andrewneudegg/delta/pkg/distributor"
-	distributorb "github.com/andrewneudegg/delta/pkg/distributor/builder"
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/relay"
-	relayb "github.com/andrewneudegg/delta/pkg/relay/builder"
 	"github.com/andrewneudegg/delta/pkg/source"
-	sourceb "github.com/andrewneudegg/delta/pkg/source/builder"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,28 +35,16 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 		relays:       make([]relay.R, 0),
 	}
 
-	for _, sConfig := range c.SourceConfigs {
-		s, err := sourceb.Get(sConfig.Name, sConfig.Config)
-		if err != nil {
-			return Pipeline{}, err
-		}
-		p.sources = append(p.sources, s)
+	if err := p.buildSources(c.SourceConfigs); err != nil {
+		return Pipeline{}, err
 	}
 
-	for _, rConfig := range c.RelayConfigs {
-		r, err := relayb.Get(rConfig.Name, rConfig.Config)
-		if err != nil {
-			return Pipeline{}, err
-		}
-		p.relays = append(p.relays, r)
+	if err := p.buildRelays(c.RelayConfigs); err != nil {
+		return Pipeline{}, err
 	}
 
-	for _, dConfig := range c.DistributorConfigs {
-		d, err := distributorb.Get(dConfig.Name, dConfig.Config)
-		if err != nil {
-			return Pipeline{}, err
-		}
-		p.distributors = append(p.distributors, d)
+	if err := p.buildDistributors(c.DistributorConfigs); err != nil {
+		return Pipeline{}, err
 	}
 
 	// Now we have constructed each of the nodes we must connect them.
@@ -66,6 +52,10 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	// probably the place to do it.
 	sourceChannels := []chan events.Event{}
 	for _, s := range p.sources {
+		if s == nil {
+			return Pipeline{}, fmt.Errorf("source was unexpectedly nil")
+		}
+
 		thisSourceChan := make(chan events.Event)
 		go func(s source.S, ch chan events.Event) {
 			err := s.Do(context.TODO(), ch)
@@ -85,6 +75,11 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	var previousSourceOutput *chan events.Event
 	previousSourceOutput = &inCh
 	for _, r := range p.relays {
+
+		if r == nil {
+			return Pipeline{}, fmt.Errorf("relay was unexpectedly nil")
+		}
+
 		thisRelayOutputChan := make(chan events.Event)
 		go r.Do(context.TODO(), *previousSourceOutput, thisRelayOutputChan)
 		previousSourceOutput = &thisRelayOutputChan
@@ -92,6 +87,11 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 
 	distributorChannels := []chan events.Event{}
 	for _, d := range p.distributors {
+
+		if d == nil {
+			return Pipeline{}, fmt.Errorf("distributor was unexpectedly nil")
+		}
+
 		distributorInputChannel := make(chan events.Event)
 		go func(d distributor.D, ch chan events.Event) {
 			err := d.Do(context.TODO(), ch)

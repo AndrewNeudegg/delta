@@ -23,5 +23,5 @@ type AppSettings struct{}
 type NodeConfig struct {
 	Name       string                 `yaml:"name"`
 	Config     map[string]interface{} `yaml:"config"`
-	SubConfigs []*NodeConfig          `yaml:"subConfigs"`
+	SubConfigs []NodeConfig           `yaml:"subConfigs"`
 }
