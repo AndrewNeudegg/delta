@@ -31,7 +31,7 @@ func TestE2ESmoke(t *testing.T) {
 	eCh := make(chan events.Event)
 	rE := []events.Event{}
 	eS := getSinkServer(eAddr, 10000000)
-	go eS.Do(context.TODO(), eCh)
+	go eS.SDo(context.TODO(), eCh)
 	go func(ch <-chan events.Event) {
 		for {
 			e := <-eCh

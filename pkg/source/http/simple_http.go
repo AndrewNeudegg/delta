@@ -128,8 +128,8 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// Do will init this component and start the listen and serve.
-func (s SimpleHTTPSink) Do(ctx context.Context, ch chan<- events.Event) error {
+// SDo will init this component and start the listen and serve.
+func (s SimpleHTTPSink) SDo(ctx context.Context, ch chan<- events.Event) error {
 	err := s.init(ch)
 	if err != nil {
 		return err

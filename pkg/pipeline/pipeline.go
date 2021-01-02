@@ -39,7 +39,7 @@ func (p *Pipeline) hookupSources(ctx context.Context) (chan events.Event, error)
 
 		go func(s source.S, ch chan events.Event) {
 			log.Infof("launching source '%s'", s.ID())
-			err := s.Do(context.TODO(), ch)
+			err := s.SDo(context.TODO(), ch)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do source"))
 			}
@@ -65,7 +65,7 @@ func (p *Pipeline) hookupRelays(ctx context.Context, input chan events.Event) (c
 		thisRelayOutputChan := make(chan events.Event)
 		go func(inCh <-chan events.Event, outCh chan<- events.Event) {
 			log.Infof("launching relay '%s'", r.ID())
-			err := r.Do(context.TODO(), inCh, outCh)
+			err := r.RDo(context.TODO(), inCh, outCh)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do relay"))
 			}
@@ -84,7 +84,7 @@ func (p *Pipeline) hookupDistributors(ctx context.Context, input chan events.Eve
 		distributorInputChannel := make(chan events.Event)
 		go func(d distributor.D, ch chan events.Event) {
 			log.Infof("launching distributor '%s'", d.ID())
-			err := d.Do(context.TODO(), ch)
+			err := d.DDo(context.TODO(), ch)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do distributor"))
 			}

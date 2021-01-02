@@ -22,8 +22,12 @@ func (d DirectDistributor) ID() string {
 	return "distributor/http/direct"
 }
 
-// Do will make a http post at the given Addr.
-func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error {
+// DDo will make a http post at the given Addr.
+func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) error {
+
+	client := &http.Client{
+		Timeout: time.Second * 15,
+	}
 
 	// broadcast the event to the specific endpoint/s.
 	broadcast := func(e events.Event) error {
@@ -39,30 +43,23 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 		req.Header = e.GetHeaders()
 		req.Header.Set("x-message-id", e.GetMessageID()) // a polite nod
 
-		client := &http.Client{
-			Timeout: time.Second * 15,
-		}
 		_, err = client.Do(req)
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	}
 
 	// backoffRetry will help when things get bumpy...
 	backoffRetry := func(e events.Event) error {
 		backoffSecs := time.Duration(1) * time.Second
 		for i := 0; i < 5; i++ {
-			time.Sleep(backoffSecs)
 
 			if err := broadcast(e); err != nil {
 				backoffSecs = backoffSecs * 2
-				continue
 			} else {
 				e.Complete()
 				return nil
 			}
 
+			time.Sleep(backoffSecs)
 		}
 		err := fmt.Errorf("retry backoff reached")
 		e.Fail(err)

@@ -10,6 +10,6 @@ import (
 // It is responsible for identifying which services should be targetted
 // and the method that those services should receive the events.
 type D interface {
-	Do(context.Context, <-chan events.Event) error // Do will emit events that are placed into the channel.
+	DDo(context.Context, <-chan events.Event) error // Do will emit events that are placed into the channel.
 	ID() string                                    // ID returns a human readable identifier for this distributor.
 }

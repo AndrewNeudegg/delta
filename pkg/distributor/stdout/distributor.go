@@ -21,8 +21,8 @@ func (d Distributor) ID() string {
 	return "distributor/stdout"
 }
 
-// Do will write all events to stdout.
-func (d Distributor) Do(ctx context.Context, outbound <-chan events.Event) error {
+// DDo will write all events to stdout.
+func (d Distributor) DDo(ctx context.Context, outbound <-chan events.Event) error {
 	for ctx.Err() == nil {
 		select {
 		case e := <-outbound:

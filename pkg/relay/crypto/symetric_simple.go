@@ -151,8 +151,8 @@ func (r SimpleSymmetricCryptoRelay) decrypt(key []byte, data []byte) ([]byte, er
 	return plaintext, nil
 }
 
-// Do will pass messages through an intermediary that may perform operations on the data.
-func (r SimpleSymmetricCryptoRelay) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+// RDo will pass messages through an intermediary that may perform operations on the data.
+func (r SimpleSymmetricCryptoRelay) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
 
 	if r.EnvVar != "" {
 		r.Password = os.Getenv(r.EnvVar)

@@ -67,7 +67,7 @@ func TestSmoke(t *testing.T) {
 	ch := make(chan events.Event)
 	server := newServer(":8074", 512)
 
-	go server.Do(context.TODO(), ch)
+	go server.SDo(context.TODO(), ch)
 	time.Sleep(time.Second)
 }
 
@@ -87,7 +87,7 @@ func TestSendEvent(t *testing.T) {
 	time.Sleep(time.Second)
 
 	server := newServer(addr, 512)
-	go server.Do(context.TODO(), ch)
+	go server.SDo(context.TODO(), ch)
 	time.Sleep(time.Second)
 	// ------- Test --------
 
@@ -119,7 +119,7 @@ func TestSendEventWith2(t *testing.T) {
 	ch := make(chan events.Event)
 	server := newServer(addr, 512)
 	go func() {
-		err := server.Do(context.TODO(), ch)
+		err := server.SDo(context.TODO(), ch)
 		assert.Nil(t, err)
 	}()
 
@@ -168,7 +168,7 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 	ch := make(chan events.Event)
 	server := newServer(addr, 512)
 	go func() {
-		err := server.Do(context.TODO(), ch)
+		err := server.SDo(context.TODO(), ch)
 		assert.Nil(t, err)
 	}()
 
@@ -193,7 +193,7 @@ func TestVeryLargeBody(t *testing.T) {
 	ch := make(chan events.Event)
 	server := newServer(addr, 10)
 	go func() {
-		err := server.Do(context.TODO(), ch)
+		err := server.SDo(context.TODO(), ch)
 		assert.Nil(t, err)
 	}()
 

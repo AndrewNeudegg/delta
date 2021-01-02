@@ -45,7 +45,7 @@ func TestSmoke(t *testing.T) {
 	}
 
 	go func() {
-		err := r.Do(context.Background(), outboundCh, inboundCh)
+		err := r.RDo(context.Background(), outboundCh, inboundCh)
 		if err != nil {
 			t.Fatal(err)
 		}

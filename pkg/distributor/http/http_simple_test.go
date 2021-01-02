@@ -21,7 +21,7 @@ func TestNaiveSmoke(t *testing.T) {
 		ListenAddr:  ":8057",
 		MaxBodySize: 10000000,
 	}
-	go server.Do(context.TODO(), inboundEventsCh)
+	go server.SDo(context.TODO(), inboundEventsCh)
 	go func(ch chan events.Event) {
 		for {
 			e := <-ch
@@ -37,7 +37,7 @@ func TestNaiveSmoke(t *testing.T) {
 	n := DirectDistributor{
 		Addr: "http://localhost:8057",
 	}
-	go n.Do(context.Background(), outboundEventsCh)
+	go n.DDo(context.Background(), outboundEventsCh)
 
 	// sleep for goroutines.
 	time.Sleep(time.Second)

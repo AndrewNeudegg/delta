@@ -80,14 +80,14 @@ func TestSmoke(t *testing.T) {
 	}()
 
 	go func() {
-		err := eN.Do(context.TODO(), ch1, ch2)
+		err := eN.RDo(context.TODO(), ch1, ch2)
 		if err != nil {
 			panic(err)
 		}
 	}()
 
 	go func() {
-		err := dN.Do(context.TODO(), ch2, ch3)
+		err := dN.RDo(context.TODO(), ch2, ch3)
 		if err != nil {
 			panic(err)
 		}

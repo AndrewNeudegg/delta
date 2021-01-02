@@ -18,8 +18,8 @@ func (r Relay) ID() string {
 	return "relay/memory"
 }
 
-// Do will pass messages through an intermediary that may perform operations on the data.
-func (r Relay) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+// RDo will pass messages through an intermediary that may perform operations on the data.
+func (r Relay) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
 	log.Info("starting in-memory relay")
 	// Pass all messages from the outbound queue to the inbound queue.
 	for ctx.Err() == nil {

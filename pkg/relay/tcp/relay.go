@@ -108,8 +108,8 @@ func (r Relay) Emit(ctx context.Context, ch <-chan events.Event) error {
 	return ctx.Err()
 }
 
-// Do will begin processing on the I/O channels.
-func (r Relay) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+// RDo will begin processing on the I/O channels.
+func (r Relay) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 

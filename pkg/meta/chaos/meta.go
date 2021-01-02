@@ -44,7 +44,7 @@ func (s s) ID() string {
 	return ID
 }
 
-func (s s) Do(ctx context.Context, ch chan<- events.Event) error {
+func (s s) SDo(ctx context.Context, ch chan<- events.Event) error {
 	return s.m.doS(ctx, ch)
 }
 
@@ -58,7 +58,7 @@ func (r r) ID() string {
 	return ID
 }
 
-func (r r) Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (r r) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
 	return r.m.doR(ctx, outbound, inbound)
 }
 
@@ -112,7 +112,7 @@ func (m *Simple) doS(ctx context.Context, ch chan<- events.Event) error {
 
 	// We don't do much here, we just pass on the do.
 	for _, v := range m.sources {
-		go v.Do(ctx, ch)
+		go v.SDo(ctx, ch)
 	}
 	wg.Wait()
 
@@ -126,7 +126,7 @@ func (m *Simple) doR(ctx context.Context, outbound <-chan events.Event, inbound 
 
 	// We don't do much here, we just pass on the do.
 	for _, v := range m.relays {
-		go v.Do(ctx, outbound, inbound)
+		go v.RDo(ctx, outbound, inbound)
 	}
 
 	wg.Wait()
@@ -146,7 +146,7 @@ func (m *Simple) doD(ctx context.Context, ch <-chan events.Event) error {
 		chs[i] = make(chan events.Event)
 		go func(i int) {
 			log.Infof("starting proxy distributor '%s'", m.distributors[i].ID())
-			err := m.distributors[i].Do(ctx, chs[i])
+			err := m.distributors[i].DDo(ctx, chs[i])
 			if err != nil {
 				log.Error(errors.Wrapf(err, "an error occurred starting, '%s' chaos proxy distributor", m.distributors[i].ID()))
 			}
