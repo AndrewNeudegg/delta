@@ -1,4 +1,4 @@
-name: release
+name: release-manual-minor
 
 on: [workflow_dispatch]
 
