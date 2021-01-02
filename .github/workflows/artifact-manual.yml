@@ -1,13 +1,21 @@
-name: artifacts
+name: artifacts-manual
 
 # NOTE:
 #  For this action to be triggered (if using the release-tag workflow)
 #  you will need to ensure that the release-tag workflow is using a custom token
 #  that has permission to start workflows.
 #  See: https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token
-on:
-  release:
-    types: [published]
+on: 
+  workflow_dispatch:
+    inputs:
+      upload_url:
+        description: 'the release url to attach artifacts to'
+        required: true
+        default: 'https://github.com/AndrewNeudegg/delta/releases/tag/v0.0.1'
+      tag_name:
+        description: 'the tag to push the docker image as'
+        required: true
+        default: 'v0.0.1'
 
 jobs:
   build:
@@ -33,15 +41,15 @@ jobs:
 
       - uses: shogo82148/actions-upload-release-asset@v1.2.2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ github.event.inputs.upload_url }}
           asset_path: ${{ github.workspace }}/artifacts/binaries/delta-darwin-amd64
       - uses: shogo82148/actions-upload-release-asset@v1.2.2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ github.event.inputs.upload_url }}
           asset_path: ${{ github.workspace }}/artifacts/binaries/delta-linux-amd64
       - uses: shogo82148/actions-upload-release-asset@v1.2.2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ github.event.inputs.upload_url }}
           asset_path: ${{ github.workspace }}/artifacts/binaries/delta-windows-amd64.exe
 
       - name: Publish to Dockerhub
@@ -51,4 +59,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           # https://developer.github.com/v3/repos/releases/#get-a-release
-          tags: "latest,${{ github.event.release.tag_name }}"
+          tags: "latest,${{ github.event.inputs.tag_name }}"
