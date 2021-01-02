@@ -16,7 +16,7 @@ type Source struct {
 	source.S
 
 	Routines int
-	Delay    string
+	Interval string
 	Num      int
 }
 
@@ -29,9 +29,9 @@ func (s Source) ID() string {
 func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 	wg := sync.WaitGroup{}
 
-	dur, err := time.ParseDuration(s.Delay)
+	dur, err := time.ParseDuration(s.Interval)
 	if err != nil {
-		return errors.Wrapf(err, "could not parse '%s' as duration", s.Delay)
+		return errors.Wrapf(err, "could not parse '%s' as duration", s.Interval)
 	}
 
 	// retryF := func(ev events.Event, ch chan<- events.Event) *func(error) {

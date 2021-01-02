@@ -3,7 +3,7 @@ sourceConfigurations:
   - name: source/simulator/simple
     config:
       Routines: 100
-      Delay: 100ms
+      Interval: 100ms
 relayConfigs:
   - name: memory
     config: {}

@@ -1,0 +1,17 @@
+applicationSettings: {}
+sourceConfigurations:
+  - name: source/simulator/simple
+    config:
+      Routines: 1
+      Interval: 0.1s
+      Num: 25
+relayConfigs:
+  - name: memory
+    config: {}
+distributorConfigurations:
+  - name: http/direct
+    config:
+      Addr: http://127.0.0.1:8080
+  - name: distributor/performance
+    config:
+      metricsPollInterval: 10s

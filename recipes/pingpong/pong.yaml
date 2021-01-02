@@ -1,9 +1,9 @@
 applicationSettings: {}
 sourceConfigurations:
-  - name: source/simulator/simple
+  - name: http/simple
     config:
-      Routines: 500
-      Delay: 100ms
+      ListenAddr: :8080
+      MaxBodySize: 51200
 relayConfigs:
   - name: memory
     config: {}

@@ -30,8 +30,8 @@ func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) erro
 	client := &http.Client{
 		Timeout: time.Second * 15,
 		Transport: &http.Transport{
-			MaxIdleConns:        200,
-			MaxIdleConnsPerHost: 200,
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
 			// DialContext: (&net.Dialer{
 			// Timeout:   30 * time.Second,
 			// KeepAlive: 30 * time.Second,
