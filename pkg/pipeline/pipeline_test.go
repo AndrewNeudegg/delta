@@ -15,7 +15,7 @@ func TestPipelineSmoke(t *testing.T) {
 			{
 				Name: "http/simple",
 				Config: map[string]interface{}{
-					"ListenAddr":  ":5080",
+					"ListenAddr":  ":5079",
 					"MaxBodySize": 512,
 				},
 			},

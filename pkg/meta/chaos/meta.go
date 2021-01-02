@@ -73,7 +73,7 @@ func (d d) ID() string {
 	return ID
 }
 
-func (d d) Do(ctx context.Context, ch <-chan events.Event) error {
+func (d d) DDo(ctx context.Context, ch <-chan events.Event) error {
 	return d.m.doD(ctx, ch)
 }
 
