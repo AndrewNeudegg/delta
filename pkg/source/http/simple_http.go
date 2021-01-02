@@ -10,7 +10,6 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/source"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
@@ -53,48 +52,25 @@ func (s *SimpleHTTPSink) init(ch chan<- events.Event) error {
 	return nil
 }
 
-// ServeHTTP allows this to become a http server.
-func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte("must http post to sink"))
-		return
-	}
-
-	uniqueID := uuid.New().String()
-
-	log.Debugf("received '%s' at '%s%s'.", uniqueID, r.Host, r.RequestURI)
-	responseBytes, err := json.Marshal(httpSinkServerResponse{
-		ID:     uniqueID,
-		Reason: "none",
-		Status: SuccessStatus,
-	})
-
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		log.Error(errors.Wrap(err, "failed to unmarshal http message"))
-		return
-	}
-
-	body, err := ioutil.ReadAll(r.Body)
-	if len(body) > s.MaxBodySize {
-		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(fmt.Sprintf("body too large, exceeded '%d' bytes", s.MaxBodySize)))
-		return
-	}
-
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		log.Error(errors.Wrap(err, "failed to read http body"))
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	fail := func(err error) {
+func (s *SimpleHTTPSink) completeFactory(rw http.ResponseWriter, r *http.Request, e events.Event, wg *sync.WaitGroup) *func() {
+	f := func() {
 		responseBytes, _ := json.Marshal(httpSinkServerResponse{
-			ID:     uniqueID,
+			ID:     e.GetMessageID(),
+			Reason: "none",
+			Status: SuccessStatus,
+		})
+
+		rw.WriteHeader(http.StatusAccepted)
+		rw.Write(responseBytes)
+	}
+
+	return &f
+}
+
+func (s *SimpleHTTPSink) failFactory(rw http.ResponseWriter, r *http.Request, e events.Event, wg *sync.WaitGroup) *func(err error) {
+	f := func(err error) {
+		responseBytes, _ := json.Marshal(httpSinkServerResponse{
+			ID:     e.GetMessageID(),
 			Reason: err.Error(),
 			Status: FailureStatus,
 		})
@@ -109,23 +85,58 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}
 
-	complete := func() {
-		rw.WriteHeader(http.StatusAccepted)
-		rw.Write(responseBytes)
-		wg.Done()
+	return &f
+}
+
+// ServeHTTP allows this to become a http server.
+func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	r.Close = true
+
+	if r.Method != http.MethodPost {
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte("must http post to sink"))
+		return
 	}
 
-	s.inboundCh <- events.EventMsg{
-		ID:           uniqueID,
-		Headers:      r.Header,
-		URI:          r.RequestURI,
-		Content:      body,
-		FailFunc:     &fail,
-		CompleteFunc: &complete,
+	uniqueID := uuid.New().String()
+
+	log.Debugf("received '%s' at '%s%s'.", uniqueID, r.Host, r.RequestURI)
+
+	body, _ := ioutil.ReadAll(r.Body)
+	if len(body) > s.MaxBodySize {
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte(fmt.Sprintf("body too large, exceeded '%d' bytes", s.MaxBodySize)))
+		return
 	}
 
-	wg.Wait()
-	return
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	e := events.EventMsg{
+		ID:      uniqueID,
+		Headers: r.Header,
+		URI:     r.RequestURI,
+		Content: body,
+	}
+	e.SetCompletions(1)
+
+	s.inboundCh <- e
+
+	err := e.Await()
+	status := SuccessStatus
+	reason := ""
+	if err != nil {
+		status = SuccessStatus
+		reason = err.Error()
+	}
+
+	rw.WriteHeader(http.StatusInternalServerError)
+	b, _ := json.Marshal(httpSinkServerResponse{
+		ID:     uniqueID,
+		Reason: reason,
+		Status: status,
+	})
+	rw.Write(b)
 }
 
 // SDo will init this component and start the listen and serve.

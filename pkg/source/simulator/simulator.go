@@ -17,6 +17,7 @@ type Source struct {
 
 	Routines int
 	Delay    string
+	Num      int
 }
 
 // ID is a human readable ID for this thing.
@@ -50,11 +51,13 @@ func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 
 	dF := func(dur time.Duration, ch chan<- events.Event) {
 		for ctx.Err() == nil {
-			e := events.JunkEvent()
-			e.FailFunc = retryF(e, ch)
-			e.CompleteFunc = completeF(e, ch)
-			log.Debugf("generated event '%s'", e.ID)
-			ch <- e
+			for i := 0; i < s.Num; i++ {
+				e := events.JunkEvent()
+				e.FailFunc = retryF(e, ch)
+				e.CompleteFunc = completeF(e, ch)
+				log.Debugf("generated event '%s'", e.ID)
+				ch <- e
+			}
 			time.Sleep(dur)
 		}
 		wg.Done()
@@ -66,7 +69,7 @@ func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 	}
 
 	// do the serving.
-	log.Infof("running event simulator with '%d' goroutines and a delay of '%s'", s.Routines, dur)
+	log.Infof("running event simulator with batch size '%d', '%d' goroutines and a delay of '%s'", s.Num, s.Routines, dur)
 	wg.Wait()
 	return ctx.Err()
 }

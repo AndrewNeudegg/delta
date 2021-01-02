@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -22,7 +23,7 @@ type Event interface {
 
 	Fail(error)
 	Complete()
-
+	SetCompletions(i int)
 	// SetMessageID(string)            // SetMessageID will set the message id, mostly used for testing.
 	// SetHeaders(map[string][]string) // SetHeaders will set the headers, mostly used for testing.
 	// SetURI(string)                  // SetURI will set the URI, mostly used for testing.
@@ -35,6 +36,8 @@ type EventMsg struct {
 	Headers map[string][]string `json:"headers"`
 	URI     string              `json:"uri"`
 	Content []byte              `json:"content"`
+	wg      sync.WaitGroup
+	err     error
 
 	FailFunc     *func(error) `json:"-"`
 	CompleteFunc *func()      `json:"-"`
@@ -73,20 +76,25 @@ func (e EventMsg) GetContent() []byte {
 
 // Complete indicates that the given event has successfully been compelted.
 func (e EventMsg) Complete() {
-	if e.CompleteFunc != nil {
-		cF := *e.CompleteFunc
-		e.CompleteFunc = nil
-		cF()
-	}
+	// e.wg.Done()
 }
 
 // Fail indicates that the given event has failed.
 func (e EventMsg) Fail(err error) {
-	if e.FailFunc != nil {
-		eF := *e.FailFunc
-		e.FailFunc = nil
-		eF(err)
-	}
+	// e.err = err
+	// e.wg.Done()
+}
+
+// SetCompletions
+func (e EventMsg) SetCompletions(i int) {
+	// e.wg.Add(1)
+}
+
+// Await will wait
+func (e EventMsg) Await() error {
+	// e.wg.Wait()
+	// return e.err
+	return nil
 }
 
 // FromJSON will load an EventMsg from JSON string.

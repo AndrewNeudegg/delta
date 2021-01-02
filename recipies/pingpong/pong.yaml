@@ -3,7 +3,7 @@ sourceConfigurations:
   - name: http/simple
     config:
       ListenAddr: :8080
-      MaxBodySize: 512
+      MaxBodySize: 51200
 relayConfigs:
   - name: memory
     config: {}

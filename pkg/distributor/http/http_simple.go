@@ -9,6 +9,8 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	"github.com/andrewneudegg/delta/pkg/events"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // DirectDistributor will pelt events at a single predefined address.
@@ -27,34 +29,34 @@ func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) erro
 
 	client := &http.Client{
 		Timeout: time.Second * 15,
-	}
-
-	// broadcast the event to the specific endpoint/s.
-	broadcast := func(e events.Event) error {
-		req, err := http.NewRequest(
-			"POST",
-			fmt.Sprintf("%s%s", d.Addr, e.GetURI()),
-			bytes.NewBuffer(e.GetContent()))
-
-		if err != nil {
-			return err
-		}
-
-		req.Header = e.GetHeaders()
-		req.Header.Set("x-message-id", e.GetMessageID()) // a polite nod
-
-		_, err = client.Do(req)
-		return err
+		Transport: &http.Transport{
+			MaxIdleConns:        200,
+			MaxIdleConnsPerHost: 200,
+			// DialContext: (&net.Dialer{
+			// Timeout:   30 * time.Second,
+			// KeepAlive: 30 * time.Second,
+			// 	DualStack: true,
+			// }).DialContext,
+		},
 	}
 
 	// backoffRetry will help when things get bumpy...
 	backoffRetry := func(e events.Event) error {
 		backoffSecs := time.Duration(1) * time.Second
 		for i := 0; i < 5; i++ {
+			req, _ := http.NewRequest(
+				"POST",
+				fmt.Sprintf("%s%s", d.Addr, e.GetURI()),
+				bytes.NewBuffer(e.GetContent()))
+			req.Header = e.GetHeaders()
+			req.Header.Set("x-message-id", e.GetMessageID())
+			req.Header.Set("Connection", "close")
 
-			if err := broadcast(e); err != nil {
+			if _, err := client.Do(req); err != nil {
+				log.Error(errors.Wrap(err, "failed to do http request"))
 				backoffSecs = backoffSecs * 2
 			} else {
+				log.Debugf("successfully sent event '%s'", e.GetMessageID())
 				e.Complete()
 				return nil
 			}
@@ -67,7 +69,6 @@ func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) erro
 	}
 
 	for {
-		// fan out immediately.
 		select {
 		case e := <-ch:
 			go backoffRetry(e)

@@ -2,12 +2,16 @@ applicationSettings: {}
 sourceConfigurations:
   - name: source/simulator/simple
     config:
-      Routines: 10000
-      Delay: 1s
+      Routines: 1
+      Delay: 0.1s
+      Num: 25
 relayConfigs:
   - name: memory
     config: {}
 distributorConfigurations:
   - name: http/direct
     config:
-      Addr: http://localhost:8080
+      Addr: http://127.0.0.1:8080
+  - name: distributor/performance
+    config:
+      metricsPollInterval: 60s
