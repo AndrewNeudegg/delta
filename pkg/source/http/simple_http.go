@@ -42,7 +42,7 @@ type SimpleHTTPSink struct {
 }
 
 // ID returns a human readable identifier for this thing.
-func (r SimpleHTTPSink) ID() string {
+func (s SimpleHTTPSink) ID() string {
 	return "source/SimpleHTTPSink"
 }
 

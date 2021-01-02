@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	// ID represents this thing.
 	ID = "meta/chaos/simple"
 )
 

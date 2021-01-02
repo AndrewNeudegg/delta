@@ -7,6 +7,7 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 )
 
+// Channels is a generic container struct.
 type Channels struct{}
 
 // FanIn will merge multiple input channels to a singular output channel.
