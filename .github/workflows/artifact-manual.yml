@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       upload_url:
-        description: 'the release url to attach artifacts to'
+        description: 'the release url to attach artifacts to (look in the release workflow logs)'
         required: true
-        default: 'https://github.com/AndrewNeudegg/delta/releases/tag/v0.0.1'
+        default: 'https://uploads.github.com/repos/AndrewNeudegg/delta/releases/35915180/assets{?name,label}'
       tag_name:
         description: 'the tag to push the docker image as'
         required: true
