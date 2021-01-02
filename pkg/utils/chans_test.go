@@ -1,4 +1,4 @@
-package pipeline
+package utils
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 )
 
 func TestFanInSmoke(t *testing.T) {
+	c := Channels{}
 
 	resultCh := make(chan events.Event)
 	results := []events.Event{}
@@ -28,7 +29,7 @@ func TestFanInSmoke(t *testing.T) {
 		fans = append(fans, make(chan events.Event))
 	}
 
-	go fanIn(context.TODO(), fans, resultCh)
+	go c.FanIn(context.TODO(), fans, resultCh)
 
 	for i := 0; i < numFans; i++ {
 		count := fmt.Sprintf("%d", i)
@@ -36,7 +37,7 @@ func TestFanInSmoke(t *testing.T) {
 		fans[i] <- events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
-				count: []string{count},
+				count: {count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),
@@ -49,7 +50,7 @@ func TestFanInSmoke(t *testing.T) {
 }
 
 func TestFanOutSmoke(t *testing.T) {
-
+	c := Channels{}
 	inputCh := make(chan events.Event)
 
 	// -- Test Setup
@@ -70,11 +71,11 @@ func TestFanOutSmoke(t *testing.T) {
 		fans = append(fans, make(chan events.Event))
 	}
 
-	go fanIn(context.TODO(), fans, resultCh)
+	go c.FanIn(context.TODO(), fans, resultCh)
 
 	// -- Test --
 
-	go fanOut(context.TODO(), inputCh, fans)
+	go c.FanOut(context.TODO(), inputCh, fans)
 
 	for i := 0; i < numFans; i++ {
 		count := fmt.Sprintf("%d", i)
@@ -82,7 +83,7 @@ func TestFanOutSmoke(t *testing.T) {
 		inputCh <- events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
-				count: []string{count},
+				count: {count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),

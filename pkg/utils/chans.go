@@ -1,4 +1,4 @@
-package pipeline
+package utils
 
 import (
 	"context"
@@ -7,8 +7,10 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 )
 
-// fanIn will merge multiple input channels to a singular output channel.
-func fanIn(ctx context.Context, chs []chan events.Event, combined chan events.Event) error {
+type Channels struct{}
+
+// FanIn will merge multiple input channels to a singular output channel.
+func (c *Channels) FanIn(ctx context.Context, chs []chan events.Event, combined chan events.Event) error {
 	wg := sync.WaitGroup{}
 
 	merge := func(ch <-chan events.Event) {
@@ -32,8 +34,8 @@ func fanIn(ctx context.Context, chs []chan events.Event, combined chan events.Ev
 	return ctx.Err()
 }
 
-// fanOut will split a single input channel into multiple output channels.
-func fanOut(ctx context.Context, ch chan events.Event, outputs []chan events.Event) error {
+// FanOut will split a single input channel into multiple output channels.
+func (c *Channels) FanOut(ctx context.Context, ch chan events.Event, outputs []chan events.Event) error {
 
 	write := func(ch chan events.Event, e events.Event) {
 		ch <- e

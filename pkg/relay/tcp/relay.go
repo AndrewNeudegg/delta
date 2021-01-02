@@ -25,6 +25,11 @@ type Relay struct {
 	Opts Opts
 }
 
+// ID returns a human readable identifier for this thing.
+func (r Relay) ID() string {
+	return "relay/tcp"
+}
+
 // Listen for incoming events.
 func (r Relay) Listen(ctx context.Context, ch chan<- events.Event) error {
 	handleConnection := func(conn net.Conn) {

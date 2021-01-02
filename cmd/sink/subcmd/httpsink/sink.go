@@ -7,6 +7,7 @@ import (
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/source/http"
 	"github.com/andrewneudegg/delta/pkg/utils"
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
 
@@ -79,7 +80,7 @@ func httpSink(opts *httpSinkOpts) {
 	go func() {
 		err := server.Do(context.TODO(), mq)
 		if err != nil {
-			log.Error(err)
+			log.Error(errors.Wrap(err, "failed to do http sink server"))
 			os.Exit(1)
 		}
 	}()

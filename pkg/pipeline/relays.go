@@ -58,9 +58,10 @@ func (p *Pipeline) buildRelays(nc []configuration.NodeConfig) error {
 		return err
 	}
 
-	if len(resultantrelays) == 0 {
-		return fmt.Errorf("no relays were found")
-	}
+	// This is permitted (S->D without R).
+	// if len(resultantrelays) == 0 {
+	// 	return fmt.Errorf("no relays were found")
+	// }
 
 	p.relays = resultantrelays
 

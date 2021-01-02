@@ -13,4 +13,5 @@ type R interface {
 	// outbound: will receive messages from the current applications.
 	// inbound: will receive messages from the relay source.
 	Do(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error
+	ID() string // ID returns a human readable identifier for this relay.
 }

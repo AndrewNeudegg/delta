@@ -11,4 +11,5 @@ type M interface {
 	S([]source.S) (source.S, error)           // S, source intermediary.
 	R([]relay.R) (relay.R, error)             // R, relay intermediary.
 	D([]distributor.D) (distributor.D, error) // D, distributor intermediary.
+	ID() string                               // ID returns a human readable identifier for this Meta.
 }

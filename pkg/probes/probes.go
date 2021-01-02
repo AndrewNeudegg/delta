@@ -3,6 +3,7 @@ package probes
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -59,6 +60,6 @@ func (p *ProbeServer) StartProbeServer() {
 
 	err := http.ListenAndServe(p.ListenAddr, nil)
 	if err != nil {
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to listen and serve probes"))
 	}
 }

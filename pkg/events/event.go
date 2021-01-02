@@ -32,8 +32,8 @@ type EventMsg struct {
 	URI     string              `json:"uri"`
 	Content []byte              `json:"content"`
 
-	FailFunc     *func(error)
-	CompleteFunc *func()
+	FailFunc     *func(error) `json:"-"`
+	CompleteFunc *func()      `json:"-"`
 }
 
 // ToJSON will convert an EventMsg to JSON.

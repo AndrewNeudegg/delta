@@ -6,17 +6,29 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/source"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 )
 
 // httpSinkServerResponse is the response that the server will send.
+
+const (
+	// SuccessStatus is the string success message.
+	SuccessStatus = "success"
+	// FailureStatus is the string failed message.
+	FailureStatus = "success"
+)
+
 type httpSinkServerResponse struct {
-	ID string `json:"id"` // ID is the response ID for this accepted event.
+	ID     string `json:"id"`     // ID is the response ID for this accepted event.
+	Reason string `json:"reason"` // Reason is why the response happened as it did.
+	Status string `json:"status"` // Status states what happened to this event.
 }
 
 // SimpleHTTPSink is a http server.
@@ -27,6 +39,11 @@ type SimpleHTTPSink struct {
 
 	inboundCh chan<- events.Event
 	server    *http.Server
+}
+
+// ID returns a human readable identifier for this thing.
+func (r SimpleHTTPSink) ID() string {
+	return "source/SimpleHTTPSink"
 }
 
 // init this sink.
@@ -48,12 +65,14 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("received '%s' at '%s%s'.", uniqueID, r.Host, r.RequestURI)
 	responseBytes, err := json.Marshal(httpSinkServerResponse{
-		ID: uniqueID,
+		ID:     uniqueID,
+		Reason: "none",
+		Status: SuccessStatus,
 	})
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to unmarshal http message"))
 		return
 	}
 
@@ -66,19 +85,46 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to read http body"))
 		return
 	}
 
-	s.inboundCh <- events.EventMsg{
-		ID:      uniqueID,
-		Headers: r.Header,
-		URI:     r.RequestURI,
-		Content: body,
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	fail := func(err error) {
+		responseBytes, _ := json.Marshal(httpSinkServerResponse{
+			ID:     uniqueID,
+			Reason: err.Error(),
+			Status: FailureStatus,
+		})
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+		} else {
+			rw.WriteHeader(http.StatusBadRequest)
+		}
+
+		rw.Write(responseBytes)
+		wg.Done()
 	}
 
-	rw.WriteHeader(http.StatusAccepted)
-	rw.Write(responseBytes)
+	complete := func() {
+		rw.WriteHeader(http.StatusAccepted)
+		rw.Write(responseBytes)
+		wg.Done()
+	}
+
+	s.inboundCh <- events.EventMsg{
+		ID:           uniqueID,
+		Headers:      r.Header,
+		URI:          r.RequestURI,
+		Content:      body,
+		FailFunc:     &fail,
+		CompleteFunc: &complete,
+	}
+
+	wg.Wait()
 	return
 }
 

@@ -2,8 +2,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"runtime"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -11,16 +15,29 @@ import (
 )
 
 func configureLogger(verbose bool) {
-	log.SetFormatter(&log.TextFormatter{
+
+	packageName := "/delta/"
+
+	log.SetReportCaller(true)
+	log.StandardLogger().SetFormatter(&logrus.TextFormatter{
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			// s := strings.Split(f.Function, ".")
+			// funcName := s[len(s)-1]
+			relativeFPath := strings.SplitAfterN(f.File, packageName, 2)[1]
+			return "", fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
+			// return funcName, fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
+		},
+
 		DisableColors: false,
 		FullTimestamp: true,
 	})
+
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
 	log.SetOutput(os.Stdout)
-
 	// Only log the warning severity or above.
 	if verbose {
+
 		log.SetLevel(log.DebugLevel)
 	} else {
 		log.SetLevel(log.InfoLevel)
@@ -45,5 +62,6 @@ For more information and up-to-date documentation take a look at http://github.c
 
 	rootCmd.AddCommand(serve.Cmd())
 
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	log.Error(err, "application exiting")
 }

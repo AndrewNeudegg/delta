@@ -40,6 +40,11 @@ type SimpleSymmetricCryptoRelay struct {
 	direction encryptionDirection // specifies if this is encryption or decryption.
 }
 
+// ID returns a human readable identifier for this thing.
+func (r SimpleSymmetricCryptoRelay) ID() string {
+	return "relay/SimpleSymmetricCryptoRelay"
+}
+
 func (r SimpleSymmetricCryptoRelay) actionMap(m map[string][]string) (map[string][]string, error) {
 	resultantMap := make(map[string][]string)
 
