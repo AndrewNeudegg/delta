@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"sync"
 
 	"github.com/google/uuid"
 )
@@ -36,8 +35,8 @@ type EventMsg struct {
 	Headers map[string][]string `json:"headers"`
 	URI     string              `json:"uri"`
 	Content []byte              `json:"content"`
-	wg      sync.WaitGroup
-	err     error
+	// wg      sync.WaitGroup
+	// err     error
 
 	FailFunc     *func(error) `json:"-"`
 	CompleteFunc *func()      `json:"-"`
@@ -85,7 +84,7 @@ func (e EventMsg) Fail(err error) {
 	// e.wg.Done()
 }
 
-// SetCompletions
+// SetCompletions todo
 func (e EventMsg) SetCompletions(i int) {
 	// e.wg.Add(1)
 }

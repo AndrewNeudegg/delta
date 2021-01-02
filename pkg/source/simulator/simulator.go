@@ -34,27 +34,27 @@ func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 		return errors.Wrapf(err, "could not parse '%s' as duration", s.Delay)
 	}
 
-	retryF := func(ev events.Event, ch chan<- events.Event) *func(error) {
-		f := func(e error) {
-			log.Debugf("event with id '%s' failed, retrying", ev.GetMessageID())
-			ch <- ev
-		}
-		return &f
-	}
+	// retryF := func(ev events.Event, ch chan<- events.Event) *func(error) {
+	// 	f := func(e error) {
+	// 		log.Debugf("event with id '%s' failed, retrying", ev.GetMessageID())
+	// 		ch <- ev
+	// 	}
+	// 	return &f
+	// }
 
-	completeF := func(e events.Event, ch chan<- events.Event) *func() {
-		f := func() {
-			log.Debugf("event with id '%s' completed", e.GetMessageID())
-		}
-		return &f
-	}
+	// completeF := func(e events.Event, ch chan<- events.Event) *func() {
+	// 	f := func() {
+	// 		log.Debugf("event with id '%s' completed", e.GetMessageID())
+	// 	}
+	// 	return &f
+	// }
 
 	dF := func(dur time.Duration, ch chan<- events.Event) {
 		for ctx.Err() == nil {
 			for i := 0; i < s.Num; i++ {
 				e := events.JunkEvent()
-				e.FailFunc = retryF(e, ch)
-				e.CompleteFunc = completeF(e, ch)
+				// e.FailFunc = retryF(e, ch)
+				// e.CompleteFunc = completeF(e, ch)
 				log.Debugf("generated event '%s'", e.ID)
 				ch <- e
 			}
