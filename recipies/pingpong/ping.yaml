@@ -1,0 +1,13 @@
+applicationSettings: {}
+sourceConfigurations:
+  - name: source/simulator/simple
+    config:
+      Routines: 1
+      Delay: 1us
+relayConfigs:
+  - name: memory
+    config: {}
+distributorConfigurations:
+  - name: http/direct
+    config:
+      Addr: http://localhost:8080

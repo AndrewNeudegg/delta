@@ -24,7 +24,9 @@ func TestNaiveSmoke(t *testing.T) {
 	go server.Do(context.TODO(), inboundEventsCh)
 	go func(ch chan events.Event) {
 		for {
-			inboundEvents = append(inboundEvents, <-ch)
+			e := <-ch
+			e.Complete()
+			inboundEvents = append(inboundEvents, e)
 		}
 	}(inboundEventsCh)
 

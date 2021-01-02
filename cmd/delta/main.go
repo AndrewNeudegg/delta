@@ -18,28 +18,30 @@ func configureLogger(verbose bool) {
 
 	packageName := "/delta/"
 
-	log.SetReportCaller(true)
-	log.StandardLogger().SetFormatter(&logrus.TextFormatter{
-		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			// s := strings.Split(f.Function, ".")
-			// funcName := s[len(s)-1]
-			relativeFPath := strings.SplitAfterN(f.File, packageName, 2)[1]
-			return "", fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
-			// return funcName, fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
-		},
-
-		DisableColors: false,
-		FullTimestamp: true,
-	})
-
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
 	log.SetOutput(os.Stdout)
 	// Only log the warning severity or above.
 	if verbose {
+		log.SetReportCaller(true)
+		log.StandardLogger().SetFormatter(&logrus.TextFormatter{
+			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+				// s := strings.Split(f.Function, ".")
+				// funcName := s[len(s)-1]
+				relativeFPath := strings.SplitAfterN(f.File, packageName, 2)[1]
+				return "", fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
+				// return funcName, fmt.Sprintf(" %s:%d", relativeFPath, f.Line)
+			},
 
+			DisableColors: false,
+			FullTimestamp: true,
+		})
 		log.SetLevel(log.DebugLevel)
 	} else {
+		log.StandardLogger().SetFormatter(&logrus.TextFormatter{
+			DisableColors: false,
+			FullTimestamp: true,
+		})
 		log.SetLevel(log.InfoLevel)
 	}
 }
@@ -59,9 +61,11 @@ For more information and up-to-date documentation take a look at http://github.c
 	}
 
 	rootCmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "verbose output")
-
 	rootCmd.AddCommand(serve.Cmd())
 
 	err := rootCmd.Execute()
-	log.Error(err, "application exiting")
+	if err != nil {
+		log.Error(err)
+	}
+	log.Warn("application exiting")
 }

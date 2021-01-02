@@ -1,0 +1,11 @@
+applicationSettings: {}
+sourceConfigurations:
+  - name: http/simple
+    config:
+      ListenAddr: :8080
+      MaxBodySize: 512
+relayConfigs:
+  - name: memory
+    config: {}
+distributorConfigurations:
+  - name: stdout

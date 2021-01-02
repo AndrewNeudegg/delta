@@ -146,5 +146,6 @@ func (s SimpleHTTPSink) Do(ctx context.Context, ch chan<- events.Event) error {
 	}()
 
 	// do the serving.
+	log.Infof("starting sink server at '%s'", s.ListenAddr)
 	return s.server.ListenAndServe()
 }

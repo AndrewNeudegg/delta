@@ -18,6 +18,11 @@ type DirectDistributor struct {
 	Addr string // Addr to send events to (http://localhost:8080).
 }
 
+// ID returns a human readable identifier for this thing.
+func (d DirectDistributor) ID() string {
+	return "distributor/http/direct"
+}
+
 // Do will make a http post at the given Addr.
 func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error {
 

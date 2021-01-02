@@ -2,6 +2,10 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
+
+	"github.com/google/uuid"
 )
 
 // Distributor will queue an event for distribution, taking care of the messy details.
@@ -70,14 +74,18 @@ func (e EventMsg) GetContent() []byte {
 // Complete indicates that the given event has successfully been compelted.
 func (e EventMsg) Complete() {
 	if e.CompleteFunc != nil {
-		(*e.CompleteFunc)()
+		cF := *e.CompleteFunc
+		e.CompleteFunc = nil
+		cF()
 	}
 }
 
 // Fail indicates that the given event has failed.
 func (e EventMsg) Fail(err error) {
 	if e.FailFunc != nil {
-		(*e.FailFunc)(err)
+		eF := *e.FailFunc
+		e.FailFunc = nil
+		eF(err)
 	}
 }
 
@@ -91,6 +99,21 @@ func FromJSONb(payload []byte) (EventMsg, error) {
 	var e EventMsg
 	err := json.Unmarshal(payload, &e)
 	return e, err
+}
+
+// JunkEvent generates a junk event.
+func JunkEvent() EventMsg {
+	r := rand.Int()
+	sR := fmt.Sprintf("%d", r)
+
+	return EventMsg{
+		ID:           uuid.New().String(),
+		Headers:      map[string][]string{},
+		URI:          fmt.Sprintf("/%s/%s", sR, "junk"),
+		Content:      []byte(sR),
+		FailFunc:     nil,
+		CompleteFunc: nil,
+	}
 }
 
 // // SetMessageID will set the message id, mostly used for testing.
