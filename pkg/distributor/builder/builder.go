@@ -5,6 +5,7 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	"github.com/andrewneudegg/delta/pkg/distributor/http"
+	"github.com/andrewneudegg/delta/pkg/distributor/performance"
 	"github.com/andrewneudegg/delta/pkg/distributor/stdout"
 )
 
@@ -19,6 +20,10 @@ func Get(distributorName string, distributorConfiguration interface{}) (distribu
 		d := stdout.Distributor{}
 		err := mapstructure.Decode(distributorConfiguration, &d)
 		return d, err
+	case "distributor/performance":
+		d := performance.Distributor{}
+		err := mapstructure.Decode(distributorConfiguration, &d)
+		return &d, err
 	}
 
 	return nil, nil

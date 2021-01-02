@@ -24,8 +24,8 @@ func (s Source) ID() string {
 	return "source/simulator"
 }
 
-// Do will start the simulator.
-func (s Source) Do(ctx context.Context, ch chan<- events.Event) error {
+// SDo will start the simulator.
+func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 	wg := sync.WaitGroup{}
 
 	dur, err := time.ParseDuration(s.Delay)

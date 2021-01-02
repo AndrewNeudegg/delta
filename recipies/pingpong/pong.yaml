@@ -8,4 +8,6 @@ relayConfigs:
   - name: memory
     config: {}
 distributorConfigurations:
-  - name: stdout
+  - name: distributor/performance
+    config:
+      metricsPollInterval: 60s
