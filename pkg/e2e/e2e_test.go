@@ -35,6 +35,8 @@ func TestE2ESmoke(t *testing.T) {
 	go func(ch <-chan events.Event) {
 		for {
 			e := <-eCh
+			e.Complete() // fails this test if not here.
+			// the chaining fails.
 			rE = append(rE, e)
 		}
 	}(eCh)
@@ -81,7 +83,7 @@ distributorConfigurations:
 	}
 
 	for i := 0; i < numEvents; i++ {
-		f(i)
+		go f(i)
 		time.Sleep(time.Microsecond)
 	}
 

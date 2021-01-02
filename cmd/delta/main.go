@@ -67,5 +67,4 @@ For more information and up-to-date documentation take a look at http://github.c
 	if err != nil {
 		log.Error(err)
 	}
-	log.Warn("application exiting")
 }

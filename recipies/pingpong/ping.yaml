@@ -2,8 +2,8 @@ applicationSettings: {}
 sourceConfigurations:
   - name: source/simulator/simple
     config:
-      Routines: 1
-      Delay: 1us
+      Routines: 10
+      Delay: 5ms
 relayConfigs:
   - name: memory
     config: {}

@@ -80,6 +80,7 @@ func TestSendEvent(t *testing.T) {
 	go func(ch chan events.Event) {
 		for {
 			msg := <-ch
+			msg.Complete()
 			sendResults = append(sendResults, msg)
 		}
 	}(ch)
@@ -149,6 +150,7 @@ func TestSendEventWith2(t *testing.T) {
 	go func() {
 		for {
 			msg := <-ch
+			msg.Complete() // must do this..
 			sendResults = append(sendResults, msg)
 		}
 	}()
@@ -174,6 +176,7 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 	go func() {
 		for {
 			msg := <-ch
+			msg.Complete()
 			sendResults = append(sendResults, msg)
 		}
 	}()
@@ -211,6 +214,7 @@ func TestVeryLargeBody(t *testing.T) {
 	go func() {
 		for {
 			msg := <-ch
+			msg.Complete()
 			sendResults = append(sendResults, msg)
 		}
 	}()

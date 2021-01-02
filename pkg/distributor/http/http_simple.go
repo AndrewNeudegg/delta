@@ -9,7 +9,6 @@ import (
 
 	"github.com/andrewneudegg/delta/pkg/distributor"
 	"github.com/andrewneudegg/delta/pkg/events"
-	"github.com/pkg/errors"
 )
 
 // DirectDistributor will pelt events at a single predefined address.
@@ -34,7 +33,6 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 			bytes.NewBuffer(e.GetContent()))
 
 		if err != nil {
-			e.Fail(errors.Wrap(err, "http request build failed"))
 			return err
 		}
 
@@ -46,10 +44,8 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 		}
 		_, err = client.Do(req)
 		if err != nil {
-			e.Fail(errors.Wrap(err, "http request send failed"))
+			return err
 		}
-
-		e.Complete()
 		return nil
 	}
 
@@ -63,17 +59,23 @@ func (d DirectDistributor) Do(ctx context.Context, ch <-chan events.Event) error
 				backoffSecs = backoffSecs * 2
 				continue
 			} else {
+				e.Complete()
 				return nil
 			}
 
 		}
-		return fmt.Errorf("retry backoff reached")
+		err := fmt.Errorf("retry backoff reached")
+		e.Fail(err)
+		return err
 	}
 
-	for ctx.Err() == nil {
+	for {
 		// fan out immediately.
-		go backoffRetry(<-ch)
+		select {
+		case e := <-ch:
+			go backoffRetry(e)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
-
-	return ctx.Err()
 }
