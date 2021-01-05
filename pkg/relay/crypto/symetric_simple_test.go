@@ -58,24 +58,24 @@ func TestCryptoErrIfKeyWrong(t *testing.T) {
 
 func TestSmoke(t *testing.T) {
 	eN := SimpleSymmetricCryptoRelay{
-		Mode:         "encrypt",
-		Password:     "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
+		Mode:     "encrypt",
+		Password: "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
 	}
 
 	dN := SimpleSymmetricCryptoRelay{
-		Mode:         "decrypt",
-		Password:     "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
+		Mode:     "decrypt",
+		Password: "N7X92q5R2CFuP6utEZMrzsaJdDjECXwt",
 	}
 
-	ch1 := make(chan events.Event)
-	ch2 := make(chan events.Event)
+	ch1 := make(chan []events.Event)
+	ch2 := make(chan []events.Event)
 
 	results := []events.Event{}
-	ch3 := make(chan events.Event)
+	ch3 := make(chan []events.Event)
 	go func() {
 		for {
 			e := <-ch3
-			results = append(results, e)
+			results = append(results, e...)
 		}
 	}()
 
@@ -96,14 +96,14 @@ func TestSmoke(t *testing.T) {
 	numEvents := 100
 	for i := 0; i < numEvents; i++ {
 		count := fmt.Sprintf("%d", i)
-		ch1 <- events.EventMsg{
+		ch1 <- []events.Event{events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: []string{count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),
-		}
+		}}
 	}
 
 	// messages can take some time.

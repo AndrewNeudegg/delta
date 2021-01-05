@@ -11,10 +11,10 @@ import (
 type Channels struct{}
 
 // FanIn will merge multiple input channels to a singular output channel.
-func (c *Channels) FanIn(ctx context.Context, chs []chan events.Event, combined chan events.Event) error {
+func (c *Channels) FanIn(ctx context.Context, chs []chan []events.Event, combined chan []events.Event) error {
 	wg := sync.WaitGroup{}
 
-	merge := func(ch <-chan events.Event) {
+	merge := func(ch <-chan []events.Event) {
 		for {
 			select {
 			case e := <-ch:
@@ -36,10 +36,10 @@ func (c *Channels) FanIn(ctx context.Context, chs []chan events.Event, combined 
 }
 
 // FanOut will split a single input channel into multiple output channels.
-func (c *Channels) FanOut(ctx context.Context, ch chan events.Event, outputs []chan events.Event) error {
-	dispatch := func(chs []chan events.Event, e events.Event) {
+func (c *Channels) FanOut(ctx context.Context, ch chan []events.Event, outputs []chan []events.Event) error {
+	dispatch := func(chs []chan []events.Event, e []events.Event) {
 		for _, v := range chs {
-			go func(to chan events.Event, e events.Event) {
+			go func(to chan []events.Event, e []events.Event) {
 				to <- e
 			}(v, e)
 		}

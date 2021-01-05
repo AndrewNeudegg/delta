@@ -45,7 +45,7 @@ func (s s) ID() string {
 	return ID
 }
 
-func (s s) SDo(ctx context.Context, ch chan<- events.Event) error {
+func (s s) SDo(ctx context.Context, ch chan<- []events.Event) error {
 	return s.m.doS(ctx, ch)
 }
 
@@ -59,7 +59,7 @@ func (r r) ID() string {
 	return ID
 }
 
-func (r r) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (r r) RDo(ctx context.Context, outbound <-chan []events.Event, inbound chan<- []events.Event) error {
 	return r.m.doR(ctx, outbound, inbound)
 }
 
@@ -73,7 +73,7 @@ func (d d) ID() string {
 	return ID
 }
 
-func (d d) DDo(ctx context.Context, ch <-chan events.Event) error {
+func (d d) DDo(ctx context.Context, ch <-chan []events.Event) error {
 	return d.m.doD(ctx, ch)
 }
 
@@ -107,7 +107,7 @@ func (m Simple) isChance(f float32) bool {
 }
 
 // DoS will do S with some modification.
-func (m *Simple) doS(ctx context.Context, ch chan<- events.Event) error {
+func (m *Simple) doS(ctx context.Context, ch chan<- []events.Event) error {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -121,7 +121,7 @@ func (m *Simple) doS(ctx context.Context, ch chan<- events.Event) error {
 }
 
 // DoR will do R with some modification.
-func (m *Simple) doR(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (m *Simple) doR(ctx context.Context, outbound <-chan []events.Event, inbound chan<- []events.Event) error {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -136,15 +136,15 @@ func (m *Simple) doR(ctx context.Context, outbound <-chan events.Event, inbound 
 }
 
 // DoD will do D with some modification.
-func (m *Simple) doD(ctx context.Context, ch <-chan events.Event) error {
+func (m *Simple) doD(ctx context.Context, ch <-chan []events.Event) error {
 	c := utils.Channels{}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	chs := make([]chan events.Event, len(m.distributors))
-	intermediateCh := make(chan events.Event)
+	chs := make([]chan []events.Event, len(m.distributors))
+	intermediateCh := make(chan []events.Event)
 	for i := 0; i < len(m.distributors); i++ {
-		chs[i] = make(chan events.Event)
+		chs[i] = make(chan []events.Event)
 		go func(i int) {
 			log.Infof("starting proxy distributor '%s'", m.distributors[i].ID())
 			err := m.distributors[i].DDo(ctx, chs[i])
@@ -161,15 +161,19 @@ func (m *Simple) doD(ctx context.Context, ch <-chan events.Event) error {
 	go func() {
 		for ctx.Err() == nil {
 			select {
-			case e := <-ch:
-				if m.isChance(m.FailChance) {
-					// log.Debugf("event '%s' was lucky!", e.GetMessageID())
-					intermediateCh <- e
-					continue
-				} else {
-					// log.Debugf("event '%s' was unlucky and will be dropped, event drop probability is '%f'", e.GetMessageID(), m.FailChance)
-					e.Fail(fmt.Errorf("chaos happened to this event"))
+			case eventCol := <-ch:
+				outEventCol := []events.Event{}
+				for _, e := range eventCol {
+					if m.isChance(m.FailChance) {
+						// log.Debugf("event '%s' was lucky!", e.GetMessageID())
+						outEventCol = append(outEventCol, e)
+						continue
+					} else {
+						// log.Debugf("event '%s' was unlucky and will be dropped, event drop probability is '%f'", e.GetMessageID(), m.FailChance)
+						e.Fail(fmt.Errorf("chaos happened to this event"))
+					}
 				}
+				intermediateCh <- outEventCol
 			case _ = <-ctx.Done():
 				break
 			}

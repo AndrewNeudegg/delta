@@ -3,11 +3,11 @@ package pipeline
 import "github.com/andrewneudegg/delta/pkg/events"
 
 // EventMiddlewareFunc is a function that will be called on each event.
-type EventMiddlewareFunc func(events.Event)
+type EventMiddlewareFunc func([]events.Event)
 
 // Inject wraps the given channel with another channel that actions the middleware on each item in a separate goroutine.
-func Inject(ch chan events.Event, middleware EventMiddlewareFunc) chan events.Event {
-	newOutPipe := make(chan events.Event)
+func Inject(ch chan []events.Event, middleware EventMiddlewareFunc) chan []events.Event {
+	newOutPipe := make(chan []events.Event)
 
 	go func() {
 		for {

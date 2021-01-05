@@ -31,14 +31,20 @@ func (r Relay) ID() string {
 }
 
 // Listen for incoming events.
-func (r Relay) Listen(ctx context.Context, ch chan<- events.Event) error {
+func (r Relay) Listen(ctx context.Context, ch chan<- []events.Event) error {
 	handleConnection := func(conn net.Conn) {
 		defer conn.Close()
 		// This is a little bit wasteful.
 		dec := gob.NewDecoder(conn)
-		e := &events.EventMsg{}
-		dec.Decode(e)
-		ch <- e
+		e := []events.EventMsg{}
+		dec.Decode(&e)
+
+		eventCol := make([]events.Event, len(e))
+		for i := 0; i < len(eventCol); i++ {
+			eventCol[i] = e[i]
+		}
+
+		ch <- eventCol // TODO: fix this.
 	}
 
 	ln, err := net.Listen(r.Opts.Protocol(), r.Opts.ListenAddress())
@@ -69,9 +75,9 @@ func (r Relay) Listen(ctx context.Context, ch chan<- events.Event) error {
 }
 
 // Emit will emit all messages passed in to the channel.
-func (r Relay) Emit(ctx context.Context, ch <-chan events.Event) error {
+func (r Relay) Emit(ctx context.Context, ch <-chan []events.Event) error {
 
-	emit := func(e events.Event) error {
+	emit := func(e []events.Event) error {
 		conn, err := net.Dial(r.Opts.Protocol(), r.Opts.SendAddress())
 		defer conn.Close()
 		if err != nil {
@@ -81,12 +87,12 @@ func (r Relay) Emit(ctx context.Context, ch <-chan events.Event) error {
 		return encoder.Encode(e)
 	}
 
-	backoffRetry := func(e events.Event) error {
+	backoffRetry := func(e []events.Event) error {
 		backoffSecs := time.Duration(1) * time.Second
 		for i := 0; i < 5; i++ {
-			time.Sleep(backoffSecs)
 			if err := emit(e); err != nil {
 				backoffSecs = backoffSecs * 2
+				time.Sleep(backoffSecs)
 				continue
 			} else {
 				return nil
@@ -109,7 +115,7 @@ func (r Relay) Emit(ctx context.Context, ch <-chan events.Event) error {
 }
 
 // RDo will begin processing on the I/O channels.
-func (r Relay) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (r Relay) RDo(ctx context.Context, outbound <-chan []events.Event, inbound chan<- []events.Event) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 

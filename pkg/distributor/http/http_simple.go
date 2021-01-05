@@ -25,7 +25,7 @@ func (d DirectDistributor) ID() string {
 }
 
 // DDo will make a http post at the given Addr.
-func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) error {
+func (d DirectDistributor) DDo(ctx context.Context, ch <-chan []events.Event) error {
 
 	client := &http.Client{
 		Timeout: time.Second * 15,
@@ -41,31 +41,34 @@ func (d DirectDistributor) DDo(ctx context.Context, ch <-chan events.Event) erro
 	}
 
 	// backoffRetry will help when things get bumpy...
-	backoffRetry := func(e events.Event) error {
-		backoffSecs := time.Duration(1) * time.Second
-		for i := 0; i < 5; i++ {
-			req, _ := http.NewRequest(
-				"POST",
-				fmt.Sprintf("%s%s", d.Addr, e.GetURI()),
-				bytes.NewBuffer(e.GetContent()))
-			req.Header = e.GetHeaders()
-			req.Header.Set("x-message-id", e.GetMessageID())
-			req.Header.Set("Connection", "close")
+	backoffRetry := func(eventCol []events.Event) error {
+		for _, e := range eventCol {
+			backoffSecs := time.Duration(1) * time.Second
+			for i := 0; i < 5; i++ {
+				req, _ := http.NewRequest(
+					"POST",
+					fmt.Sprintf("%s%s", d.Addr, e.GetURI()),
+					bytes.NewBuffer(e.GetContent()))
+				req.Header = e.GetHeaders()
+				req.Header.Set("x-message-id", e.GetMessageID())
+				req.Header.Set("Connection", "close")
 
-			if _, err := client.Do(req); err != nil {
-				log.Error(errors.Wrap(err, "failed to do http request"))
-				backoffSecs = backoffSecs * 2
-			} else {
-				log.Debugf("successfully sent event '%s'", e.GetMessageID())
-				e.Complete()
-				return nil
+				if _, err := client.Do(req); err != nil {
+					log.Error(errors.Wrap(err, "failed to do http request"))
+					backoffSecs = backoffSecs * 2
+				} else {
+					log.Debugf("successfully sent event '%s'", e.GetMessageID())
+					e.Complete()
+					return nil
+				}
+
+				time.Sleep(backoffSecs)
 			}
-
-			time.Sleep(backoffSecs)
+			err := fmt.Errorf("retry backoff reached")
+			e.Fail(err)
+			return err
 		}
-		err := fmt.Errorf("retry backoff reached")
-		e.Fail(err)
-		return err
+		return nil
 	}
 
 	for {

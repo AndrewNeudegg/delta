@@ -30,14 +30,14 @@ func (p Pipeline) Await() {
 
 // hookupSources will build a channel for each source so that
 // they may be audited at another point in time.
-func (p *Pipeline) hookupSources(ctx context.Context) (chan events.Event, error) {
-	sourceChannels := []chan events.Event{}
-	outputCh := make(chan events.Event)
+func (p *Pipeline) hookupSources(ctx context.Context) (chan []events.Event, error) {
+	sourceChannels := []chan []events.Event{}
+	outputCh := make(chan []events.Event)
 
 	for _, s := range p.sources {
-		thisSourceChan := make(chan events.Event)
+		thisSourceChan := make(chan []events.Event)
 
-		go func(s source.S, ch chan events.Event) {
+		go func(s source.S, ch chan []events.Event) {
 			log.Infof("launching source '%s'", s.ID())
 			err := s.SDo(context.TODO(), ch)
 			if err != nil {
@@ -57,13 +57,13 @@ func (p *Pipeline) hookupSources(ctx context.Context) (chan events.Event, error)
 
 // hookupRelays will daisy chain the relays together
 // from first to last, returning the final output chan.
-func (p *Pipeline) hookupRelays(ctx context.Context, input chan events.Event) (chan events.Event, error) {
-	var previousSourceOutput *chan events.Event
+func (p *Pipeline) hookupRelays(ctx context.Context, input chan []events.Event) (chan []events.Event, error) {
+	var previousSourceOutput *chan []events.Event
 	previousSourceOutput = &input
 
 	for _, r := range p.relays {
-		thisRelayOutputChan := make(chan events.Event)
-		go func(inCh <-chan events.Event, outCh chan<- events.Event) {
+		thisRelayOutputChan := make(chan []events.Event)
+		go func(inCh <-chan []events.Event, outCh chan<- []events.Event) {
 			log.Infof("launching relay '%s'", r.ID())
 			err := r.RDo(context.TODO(), inCh, outCh)
 			if err != nil {
@@ -78,11 +78,11 @@ func (p *Pipeline) hookupRelays(ctx context.Context, input chan events.Event) (c
 	return *previousSourceOutput, nil
 }
 
-func (p *Pipeline) hookupDistributors(ctx context.Context, input chan events.Event) error {
-	distributorChannels := make([]chan events.Event, len(p.distributors))
+func (p *Pipeline) hookupDistributors(ctx context.Context, input chan []events.Event) error {
+	distributorChannels := make([]chan []events.Event, len(p.distributors))
 	for _, d := range p.distributors {
-		distributorInputChannel := make(chan events.Event)
-		go func(d distributor.D, ch chan events.Event) {
+		distributorInputChannel := make(chan []events.Event)
+		go func(d distributor.D, ch chan []events.Event) {
 			log.Infof("launching distributor '%s'", d.ID())
 			err := d.DDo(context.TODO(), ch)
 			if err != nil {
@@ -144,7 +144,7 @@ func BuildPipeline(c configuration.Container) (Pipeline, error) {
 	// probably the place to do it.
 
 	// TODO: Use prometheus middleware here instead...
-	// inCh := Inject(make(chan events.Event), NoopEventMiddleware("inbound"))
+	// inCh := Inject(make(chan []events.Event), NoopEventMiddleware("inbound"))
 	// go func() {
 	// 	chUtils.FanIn(context.TODO(), sourceChannels, inCh)
 	// }()

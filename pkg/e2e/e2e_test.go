@@ -28,16 +28,18 @@ func TestE2ESmoke(t *testing.T) {
 
 	// endpoint server
 	eAddr := ":5051"
-	eCh := make(chan events.Event)
+	eCh := make(chan []events.Event)
 	rE := []events.Event{}
 	eS := getSinkServer(eAddr, 10000000)
 	go eS.SDo(context.TODO(), eCh)
-	go func(ch <-chan events.Event) {
+	go func(ch <-chan []events.Event) {
 		for {
-			e := <-eCh
-			e.Complete() // fails this test if not here.
-			// the chaining fails.
-			rE = append(rE, e)
+			eventCol := <-eCh
+			for _, e := range eventCol {
+				e.Complete() // fails this test if not here.
+				// the chaining fails.
+				rE = append(rE, e)
+			}
 		}
 	}(eCh)
 

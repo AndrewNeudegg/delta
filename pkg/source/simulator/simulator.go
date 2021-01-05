@@ -15,9 +15,10 @@ import (
 type Source struct {
 	source.S
 
-	Routines int
-	Interval string
-	Num      int
+	Routines  int
+	Interval  string
+	Num       int
+	BatchSize int
 }
 
 // ID is a human readable ID for this thing.
@@ -26,7 +27,7 @@ func (s Source) ID() string {
 }
 
 // SDo will start the simulator.
-func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
+func (s Source) SDo(ctx context.Context, ch chan<- []events.Event) error {
 	wg := sync.WaitGroup{}
 
 	dur, err := time.ParseDuration(s.Interval)
@@ -34,7 +35,7 @@ func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 		return errors.Wrapf(err, "could not parse '%s' as duration", s.Interval)
 	}
 
-	// retryF := func(ev events.Event, ch chan<- events.Event) *func(error) {
+	// retryF := func(ev events.Event, ch chan<- []events.Event) *func(error) {
 	// 	f := func(e error) {
 	// 		log.Debugf("event with id '%s' failed, retrying", ev.GetMessageID())
 	// 		ch <- ev
@@ -42,21 +43,23 @@ func (s Source) SDo(ctx context.Context, ch chan<- events.Event) error {
 	// 	return &f
 	// }
 
-	// completeF := func(e events.Event, ch chan<- events.Event) *func() {
+	// completeF := func(e events.Event, ch chan<- []events.Event) *func() {
 	// 	f := func() {
 	// 		log.Debugf("event with id '%s' completed", e.GetMessageID())
 	// 	}
 	// 	return &f
 	// }
 
-	dF := func(dur time.Duration, ch chan<- events.Event) {
+	dF := func(dur time.Duration, ch chan<- []events.Event) {
 		for ctx.Err() == nil {
 			for i := 0; i < s.Num; i++ {
-				e := events.JunkEvent()
-				// e.FailFunc = retryF(e, ch)
-				// e.CompleteFunc = completeF(e, ch)
-				log.Debugf("generated event '%s'", e.ID)
-				ch <- e
+				eventCol := make([]events.Event, s.BatchSize)
+				for i := 0; i < s.BatchSize; i++ {
+					eventCol[i] = events.JunkEvent()
+					
+				}
+				log.Debugf("generated '%d' event", len(eventCol))
+				ch <- eventCol
 			}
 			time.Sleep(dur)
 		}

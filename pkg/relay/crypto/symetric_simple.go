@@ -152,7 +152,7 @@ func (r SimpleSymmetricCryptoRelay) decrypt(key []byte, data []byte) ([]byte, er
 }
 
 // RDo will pass messages through an intermediary that may perform operations on the data.
-func (r SimpleSymmetricCryptoRelay) RDo(ctx context.Context, outbound <-chan events.Event, inbound chan<- events.Event) error {
+func (r SimpleSymmetricCryptoRelay) RDo(ctx context.Context, outbound <-chan []events.Event, inbound chan<- []events.Event) error {
 
 	if r.EnvVar != "" {
 		r.Password = os.Getenv(r.EnvVar)
@@ -178,31 +178,37 @@ func (r SimpleSymmetricCryptoRelay) RDo(ctx context.Context, outbound <-chan eve
 	// Pass all messages from the outbound queue to the inbound queue.
 	for ctx.Err() == nil {
 		select {
-		case e := <-outbound:
-			mHeaders, err := r.actionMap(e.GetHeaders())
-			if err != nil {
-				log.Error(errors.Wrapf(err, "failed to '%s' headers for event '%s'", r.Mode, e.GetMessageID()))
-				continue // halt, we cannot continue
+		case eventCol := <-outbound:
+			eventOutCol := make([]events.Event, len(eventCol))
+
+			for i, e := range eventCol {
+				mHeaders, err := r.actionMap(e.GetHeaders())
+				if err != nil {
+					log.Error(errors.Wrapf(err, "failed to '%s' headers for event '%s'", r.Mode, e.GetMessageID()))
+					continue // halt, we cannot continue
+				}
+
+				mURI, err := r.actionString(e.GetURI())
+				if err != nil {
+					log.Error(errors.Wrapf(err, "failed to '%s' URI for event '%s'", r.Mode, e.GetMessageID()))
+					continue // halt, we cannot continue
+				}
+
+				mContent, err := r.actionContent(e.GetContent())
+				if err != nil {
+					log.Error(errors.Wrapf(err, "failed to '%s' content for event '%s'", r.Mode, e.GetMessageID()))
+					continue // halt, we cannot continue
+				}
+
+				eventOutCol[i] = events.EventMsg{
+					ID:      e.GetMessageID(),
+					Headers: mHeaders,
+					URI:     mURI,
+					Content: mContent,
+				}
 			}
 
-			mURI, err := r.actionString(e.GetURI())
-			if err != nil {
-				log.Error(errors.Wrapf(err, "failed to '%s' URI for event '%s'", r.Mode, e.GetMessageID()))
-				continue // halt, we cannot continue
-			}
-
-			mContent, err := r.actionContent(e.GetContent())
-			if err != nil {
-				log.Error(errors.Wrapf(err, "failed to '%s' content for event '%s'", r.Mode, e.GetMessageID()))
-				continue // halt, we cannot continue
-			}
-
-			inbound <- events.EventMsg{
-				ID:      e.GetMessageID(),
-				Headers: mHeaders,
-				URI:     mURI,
-				Content: mContent,
-			}
+			inbound <- eventOutCol
 		case _ = <-ctx.Done():
 			break
 		}

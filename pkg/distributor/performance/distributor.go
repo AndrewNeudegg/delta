@@ -27,7 +27,7 @@ func (d Distributor) ID() string {
 }
 
 // DDo will write all events to stdout.
-func (d *Distributor) DDo(ctx context.Context, outbound <-chan events.Event) error {
+func (d *Distributor) DDo(ctx context.Context, outbound <-chan []events.Event) error {
 	d.metricFrames = make([]float64, 0)
 	d.lastCheckTime = time.Now()
 	dur, err := time.ParseDuration(d.MetricsPollInterval)
@@ -49,9 +49,11 @@ func (d *Distributor) DDo(ctx context.Context, outbound <-chan events.Event) err
 
 	for {
 		select {
-		case e := <-outbound:
-			d.count = d.count + 1
-			e.Complete()
+		case eventCol := <-outbound:
+			for _, e := range eventCol {
+				d.count = d.count + 1
+				e.Complete()
+			}
 		case _ = <-ctx.Done():
 			return ctx.Err()
 		}

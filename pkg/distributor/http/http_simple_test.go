@@ -12,9 +12,9 @@ import (
 )
 
 func TestNaiveSmoke(t *testing.T) {
-	inboundEventsCh := make(chan events.Event)
+	inboundEventsCh := make(chan []events.Event)
 	inboundEvents := []events.Event{}
-	outboundEventsCh := make(chan events.Event)
+	outboundEventsCh := make(chan []events.Event)
 
 	// Setup the dummy listener.
 	server := http.SimpleHTTPSink{
@@ -22,11 +22,13 @@ func TestNaiveSmoke(t *testing.T) {
 		MaxBodySize: 10000000,
 	}
 	go server.SDo(context.TODO(), inboundEventsCh)
-	go func(ch chan events.Event) {
+	go func(ch chan []events.Event) {
 		for {
-			e := <-ch
-			e.Complete()
-			inboundEvents = append(inboundEvents, e)
+			eventCol := <-ch
+			for _, e := range eventCol {
+				e.Complete()
+				inboundEvents = append(inboundEvents, e)
+			}
 		}
 	}(inboundEventsCh)
 
@@ -45,14 +47,14 @@ func TestNaiveSmoke(t *testing.T) {
 	numEvents := 10
 	for i := 0; i < numEvents; i++ {
 		count := fmt.Sprintf("%d", i)
-		outboundEventsCh <- events.EventMsg{
+		outboundEventsCh <- []events.Event{events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: []string{count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),
-		}
+		}}
 	}
 
 	// this test cpu starves the process somewhat

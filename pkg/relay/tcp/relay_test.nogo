@@ -31,9 +31,9 @@ func (r router) ListenAddress() string {
 func TestSmoke(t *testing.T) {
 
 	// outCh is where messages that will be relayed go.
-	outboundCh := make(chan events.Event)
+	outboundCh := make(chan []events.Event)
 	// inboundChan is where messages that have been received go.
-	inboundCh := make(chan events.Event)
+	inboundCh := make(chan []events.Event)
 	inboundResults := []events.Event{}
 
 	r := Relay{
@@ -47,7 +47,7 @@ func TestSmoke(t *testing.T) {
 	go func() {
 		err := r.RDo(context.Background(), outboundCh, inboundCh)
 		if err != nil {
-			t.Fatal(err)
+			panic(err)
 		}
 	}()
 
@@ -55,14 +55,16 @@ func TestSmoke(t *testing.T) {
 	go func() {
 		for {
 			e := <-inboundCh
-			inboundResults = append(inboundResults, e)
+			inboundResults = append(inboundResults, e...)
 		}
 	}()
 
 	numEvents := 100
+	eventCol := make([]events.Event, numEvents)
 	for i := 0; i < numEvents; i++ {
+
 		count := fmt.Sprintf("%d", i)
-		outboundCh <- events.EventMsg{
+		eventCol[i] = events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: []string{count},
@@ -71,9 +73,10 @@ func TestSmoke(t *testing.T) {
 			Content: []byte(count),
 		}
 	}
+	outboundCh <- eventCol
 
 	// messages can be deep in the tcp stack, lets give them a moment to catchup.
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 15)
 
 	assert.Equal(t, numEvents, len(inboundResults))
 }

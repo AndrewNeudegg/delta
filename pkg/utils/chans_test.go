@@ -13,20 +13,20 @@ import (
 func TestFanInSmoke(t *testing.T) {
 	c := Channels{}
 
-	resultCh := make(chan events.Event)
+	resultCh := make(chan []events.Event)
 	results := []events.Event{}
 
 	go func() {
 		for {
 			e := <-resultCh
-			results = append(results, e)
+			results = append(results, e...)
 		}
 	}()
 
-	fans := []chan events.Event{}
+	fans := []chan []events.Event{}
 	numFans := 10
 	for i := 0; i < numFans; i++ {
-		fans = append(fans, make(chan events.Event))
+		fans = append(fans, make(chan []events.Event))
 	}
 
 	go c.FanIn(context.TODO(), fans, resultCh)
@@ -34,14 +34,14 @@ func TestFanInSmoke(t *testing.T) {
 	for i := 0; i < numFans; i++ {
 		count := fmt.Sprintf("%d", i)
 
-		fans[i] <- events.EventMsg{
+		fans[i] <- []events.Event{events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: {count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),
-		}
+		}}
 	}
 
 	time.Sleep(time.Second)
@@ -51,24 +51,24 @@ func TestFanInSmoke(t *testing.T) {
 
 func TestFanOutSmoke(t *testing.T) {
 	c := Channels{}
-	inputCh := make(chan events.Event)
+	inputCh := make(chan []events.Event)
 
 	// -- Test Setup
 
-	resultCh := make(chan events.Event)
+	resultCh := make(chan []events.Event)
 	results := []events.Event{}
 
 	go func() {
 		for {
 			e := <-resultCh
-			results = append(results, e)
+			results = append(results, e...)
 		}
 	}()
 
-	fans := []chan events.Event{}
+	fans := []chan []events.Event{}
 	numFans := 10
 	for i := 0; i < numFans; i++ {
-		fans = append(fans, make(chan events.Event))
+		fans = append(fans, make(chan []events.Event))
 	}
 
 	go c.FanIn(context.TODO(), fans, resultCh)
@@ -80,14 +80,14 @@ func TestFanOutSmoke(t *testing.T) {
 	for i := 0; i < numFans; i++ {
 		count := fmt.Sprintf("%d", i)
 
-		inputCh <- events.EventMsg{
+		inputCh <- []events.Event{events.EventMsg{
 			ID: count,
 			Headers: map[string][]string{
 				count: {count},
 			},
 			URI:     fmt.Sprintf("/%s", count),
 			Content: []byte(count),
-		}
+		}}
 	}
 
 	time.Sleep(time.Second)

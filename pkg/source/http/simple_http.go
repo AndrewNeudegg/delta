@@ -36,7 +36,7 @@ type SimpleHTTPSink struct {
 	ListenAddr  string
 	MaxBodySize int
 
-	inboundCh chan<- events.Event
+	inboundCh chan<- []events.Event
 	server    *http.Server
 }
 
@@ -46,7 +46,7 @@ func (s SimpleHTTPSink) ID() string {
 }
 
 // init this sink.
-func (s *SimpleHTTPSink) init(ch chan<- events.Event) error {
+func (s *SimpleHTTPSink) init(ch chan<- []events.Event) error {
 	s.inboundCh = ch
 	s.server = &http.Server{Addr: s.ListenAddr, Handler: s}
 	return nil
@@ -120,7 +120,7 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	e.SetCompletions(1)
 
-	s.inboundCh <- e
+	s.inboundCh <- []events.Event{e}
 
 	err := e.Await()
 	status := SuccessStatus
@@ -140,7 +140,7 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 // SDo will init this component and start the listen and serve.
-func (s SimpleHTTPSink) SDo(ctx context.Context, ch chan<- events.Event) error {
+func (s SimpleHTTPSink) SDo(ctx context.Context, ch chan<- []events.Event) error {
 	err := s.init(ch)
 	if err != nil {
 		return err

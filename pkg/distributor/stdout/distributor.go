@@ -22,16 +22,18 @@ func (d Distributor) ID() string {
 }
 
 // DDo will write all events to stdout.
-func (d Distributor) DDo(ctx context.Context, outbound <-chan events.Event) error {
+func (d Distributor) DDo(ctx context.Context, outbound <-chan []events.Event) error {
 	for ctx.Err() == nil {
 		select {
-		case e := <-outbound:
-			jsonBytes, err := json.Marshal(e)
-			if err != nil {
-				log.Error(errors.Wrap(err, "failed to marshal json for distribution"))
+		case events := <-outbound:
+				for _, e := range events {
+				jsonBytes, err := json.Marshal(e)
+				if err != nil {
+					log.Error(errors.Wrap(err, "failed to marshal json for distribution"))
+				}
+				log.Info(string(jsonBytes))
+				e.Complete()
 			}
-			log.Info(string(jsonBytes))
-			e.Complete()
 		case _ = <-ctx.Done():
 			break
 		}

@@ -64,7 +64,7 @@ func sendEvent(addr string, content []events.EventMsg) ([]events.Event, error) {
 }
 
 func TestSmoke(t *testing.T) {
-	ch := make(chan events.Event)
+	ch := make(chan []events.Event)
 	server := newServer(":8074", 512)
 
 	go server.SDo(context.TODO(), ch)
@@ -75,13 +75,15 @@ func TestSendEvent(t *testing.T) {
 	addr := ":8073"
 
 	// ------- Setup -------
-	ch := make(chan events.Event)
+	ch := make(chan []events.Event)
 	sendResults := make([]events.Event, 0)
-	go func(ch chan events.Event) {
+	go func(ch chan []events.Event) {
 		for {
-			msg := <-ch
-			msg.Complete()
-			sendResults = append(sendResults, msg)
+			msgCol := <-ch
+			for _, msg := range msgCol {
+				msg.Complete()
+			}
+			sendResults = append(sendResults, msgCol...)
 		}
 	}(ch)
 	time.Sleep(time.Second)
@@ -116,7 +118,7 @@ func TestSendEvent(t *testing.T) {
 func TestSendEventWith2(t *testing.T) {
 	addr := ":8072"
 
-	ch := make(chan events.Event)
+	ch := make(chan []events.Event)
 	server := newServer(addr, 512)
 	go func() {
 		err := server.SDo(context.TODO(), ch)
@@ -149,9 +151,11 @@ func TestSendEventWith2(t *testing.T) {
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-ch
-			msg.Complete() // must do this..
-			sendResults = append(sendResults, msg)
+			msgCol := <-ch
+			for _, msg := range msgCol {
+				msg.Complete() // must do this..
+			}
+			sendResults = append(sendResults, msgCol...)
 		}
 	}()
 
@@ -165,7 +169,7 @@ func TestSendEventWith2(t *testing.T) {
 func TestGetOnDisallowedRoute(t *testing.T) {
 	addr := ":8075"
 
-	ch := make(chan events.Event)
+	ch := make(chan []events.Event)
 	server := newServer(addr, 512)
 	go func() {
 		err := server.SDo(context.TODO(), ch)
@@ -175,9 +179,11 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-ch
-			msg.Complete()
-			sendResults = append(sendResults, msg)
+			msgCol := <-ch
+			for _, msg := range msgCol {
+				msg.Complete() // must do this..
+			}
+			sendResults = append(sendResults, msgCol...)
 		}
 	}()
 
@@ -190,7 +196,7 @@ func TestGetOnDisallowedRoute(t *testing.T) {
 func TestVeryLargeBody(t *testing.T) {
 	addr := ":8076"
 
-	ch := make(chan events.Event)
+	ch := make(chan []events.Event)
 	server := newServer(addr, 10)
 	go func() {
 		err := server.SDo(context.TODO(), ch)
@@ -213,9 +219,11 @@ func TestVeryLargeBody(t *testing.T) {
 	sendResults := make([]events.Event, 0)
 	go func() {
 		for {
-			msg := <-ch
-			msg.Complete()
-			sendResults = append(sendResults, msg)
+			msgCol := <-ch
+			for _, msg := range msgCol {
+				msg.Complete() // must do this..
+			}
+			sendResults = append(sendResults, msgCol...)
 		}
 	}()
 
