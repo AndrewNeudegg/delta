@@ -2,13 +2,16 @@ package definitions
 
 import (
 	"context"
-
-	resourceDefinitions "github.com/andrewneudegg/delta/pkg/resources/definitions"
 )
+
+// Identification for this pipeline.
+type Identification interface {
+	ID() string // ID defines what this thing is.
+}
 
 // Pipeline defines the construction of I->P->O.
 type Pipeline interface {
-	resourceDefinitions.Resource
+	Identification
 
-	Do(context.Context)
+	Do(context.Context) error
 }
