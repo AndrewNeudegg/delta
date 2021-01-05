@@ -118,7 +118,6 @@ func (s *SimpleHTTPSink) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		URI:     r.RequestURI,
 		Content: body,
 	}
-	e.SetCompletions(1)
 
 	s.inboundCh <- []events.Event{e}
 

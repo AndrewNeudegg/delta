@@ -22,11 +22,7 @@ type Event interface {
 
 	Fail(error)
 	Complete()
-	SetCompletions(i int)
-	// SetMessageID(string)            // SetMessageID will set the message id, mostly used for testing.
-	// SetHeaders(map[string][]string) // SetHeaders will set the headers, mostly used for testing.
-	// SetURI(string)                  // SetURI will set the URI, mostly used for testing.
-	// SetContent([]byte)              // SetContent will set the content, mostly used for testing.
+	Await() error
 }
 
 // EventMsg is the underlying Event.
@@ -82,11 +78,6 @@ func (e EventMsg) Complete() {
 func (e EventMsg) Fail(err error) {
 	// e.err = err
 	// e.wg.Done()
-}
-
-// SetCompletions todo
-func (e EventMsg) SetCompletions(i int) {
-	// e.wg.Add(1)
 }
 
 // Await will wait
