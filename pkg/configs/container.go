@@ -1,7 +1,10 @@
 package configs
 
 import (
+	"io/ioutil"
+
 	"github.com/andrewneudegg/delta/pkg/pipelines/definitions"
+	"gopkg.in/yaml.v2"
 )
 
 // AppSettings is application level configuration.
@@ -17,10 +20,22 @@ type Container struct {
 
 // FromBytes will load a container from bytes.
 func FromBytes(b []byte) (Container, error) {
-	return Container{}, nil
+	container := Container{}
+
+	err := yaml.Unmarshal(b, &container)
+	if err != nil {
+		return Container{}, err
+	}
+
+	return container, nil
 }
 
 // FromFile will load a container from file.
 func FromFile(s string) (Container, error) {
-	return Container{}, nil
+	data, err := ioutil.ReadFile(s)
+	if err != nil {
+		return Container{}, err
+	}
+
+	return FromBytes(data)
 }
