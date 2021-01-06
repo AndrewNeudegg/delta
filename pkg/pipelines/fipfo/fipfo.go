@@ -10,9 +10,9 @@ import (
 // Pipeline is a type of pipeline that fans in inputs,
 // applies processing, then fans out to the various outputs.
 type Pipeline struct {
-	Inputs    definitions.PipelineNode `mapstructure:"id"`
-	Processes definitions.PipelineNode `mapstructure:"id"`
-	Outputs   definitions.PipelineNode `mapstructure:"id"`
+	Inputs    definitions.PipelineNode `mapstructure:"input"`
+	Processes definitions.PipelineNode `mapstructure:"process"`
+	Outputs   definitions.PipelineNode `mapstructure:"output"`
 }
 
 func (f Pipeline) ID() string {
