@@ -13,7 +13,7 @@ type Input struct {
 
 // ID defines what this thing is.
 func (i Input) ID() string {
-	return "examples/noop"
+	return ID
 }
 
 // Type defines what type of resource this is.

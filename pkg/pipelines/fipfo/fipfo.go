@@ -39,12 +39,10 @@ func (f Pipeline) buildInput(n definitions.PipelineNode) (resourceDefinitions.In
 			}
 			sub = append(sub, snR)
 		}
-
 		meta, err := resources.BuildMetaResource(n.ID, n.Config, resourceMapping.MetaMapping())
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to build meta resource for '%s'", n.ID)
 		}
-
 		return meta.I(sub)
 	}
 
@@ -66,7 +64,6 @@ func (f Pipeline) inputs(ctx context.Context) (chan events.Collection, error) {
 
 		go func(i resourceDefinitions.Input, ch chan events.Collection) {
 			log.Infof("launching input '%s'", i.ID())
-
 			err := i.DoInput(context.TODO(), ch)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do input"))

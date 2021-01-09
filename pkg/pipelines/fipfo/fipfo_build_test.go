@@ -23,7 +23,10 @@ pipeline:
       input:
       - id: examples/noop
         config: {}
-        nodes: []
+        nodes:
+        - id: examples/noop
+          config: {}
+          nodes: []
       process:
       - id: examples/noop
         config: {}
@@ -69,5 +72,5 @@ func TestBuildRun(t *testing.T) {
 		}
 	}()
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 5)
 }

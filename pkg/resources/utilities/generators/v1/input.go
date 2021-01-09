@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Input is simple noop.
+// Input is simple event generator.
 type Input struct {
 	Interval          string `mapstructure:"interval"`          // Interval specifies the delays between even
 	NumberEvents      int    `mapstructure:"numberEvents"`      // NumberEvents is how many events will be in each `events.Collection`.
@@ -28,17 +28,11 @@ func (i Input) Type() definitions.ResourceType {
 
 // DoInput will accept collections of events, passing them into the channel.
 func (i Input) DoInput(ctx context.Context, ch chan<- events.Collection) error {
-	go func() {
-		err := RunGenerator(ctx, Configuration{
-			Interval:          i.Interval,
-			NumberEvents:      i.NumberEvents,
-			NumberCollections: i.NumberCollections,
-		}, ch)
-		if err != nil {
-			log.Error(err)
-		}
-	}()
+	log.Infof("starting DoInput for '%s'", i.ID())
 
-	<-ctx.Done()
-	return nil
+	return RunGenerator(ctx, Configuration{
+		Interval:          i.Interval,
+		NumberEvents:      i.NumberEvents,
+		NumberCollections: i.NumberCollections,
+	}, ch)
 }

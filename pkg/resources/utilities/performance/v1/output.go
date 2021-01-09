@@ -1,16 +1,18 @@
-package console1
+package performance1
 
 import (
 	"context"
+	"time"
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 // Output is simple noop.
 type Output struct {
+	o            definitions.Output
+	sampleWindow time.Duration
 }
 
 // ID defines what this thing is.
@@ -25,13 +27,10 @@ func (o Output) Type() definitions.ResourceType {
 
 // DoOutput will perform its function on each collection placed into the channel.
 func (o Output) DoOutput(ctx context.Context, ch <-chan events.Collection) error {
-	log.Infof("'%s' awaiting events", ID)
-	for {
-		select {
-		case eCol := <-ch:
-			log.Debugf("received '%d' events", len(eCol))
-		case <-ctx.Done():
-			return nil
-		}
+	if o.o == nil {
+		return errors.Errorf("'%s' cannot be used as an output resource directly", ID)
 	}
+
+	<-ctx.Done()
+	return nil
 }

@@ -13,7 +13,7 @@ type Output struct {
 
 // ID defines what this thing is.
 func (o Output) ID() string {
-	return "examples/noop"
+	return ID
 }
 
 // Type defines what type of resource this is.
