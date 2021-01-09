@@ -1,0 +1,12 @@
+applicationSettings: {}
+pipeline:
+  - id: pipelines/fipfo
+    config:
+      input:
+        - id: utilities/generators/v1
+          config:
+            interval: 1s
+            numberEvents: 1000
+            numberCollections: 1000
+      output:
+        - id: utilities/console/v1

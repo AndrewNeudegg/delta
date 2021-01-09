@@ -24,6 +24,8 @@ type Configuration struct {
 
 // RunGenerator actions the given config.
 func RunGenerator(ctx context.Context, config Configuration, ch chan<- events.Collection) error {
+	log.Infof("starting '%s'", ID)
+	
 	dur, err := time.ParseDuration(config.Interval)
 	if err != nil {
 		return errors.Wrapf(err, "could not parse '%s' as duration", config.Interval)
@@ -41,6 +43,7 @@ func RunGenerator(ctx context.Context, config Configuration, ch chan<- events.Co
 	for ctx.Err() == nil {
 		for _, col := range eCollections {
 			ch <- col
+			log.Debugf("wrote event collection with '%d' events", len(col))
 		}
 		time.Sleep(dur)
 	}

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	configuration "github.com/andrewneudegg/delta/pkg/configs"
+	configuration "github.com/andrewneudegg/delta/pkg/configuration"
 	"github.com/andrewneudegg/delta/pkg/pipelines"
 	"github.com/andrewneudegg/delta/pkg/pipelines/definitions"
 	"github.com/stretchr/testify/assert"

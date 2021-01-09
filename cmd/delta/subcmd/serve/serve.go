@@ -2,11 +2,14 @@ package serve
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"github.com/andrewneudegg/delta/pkg/configuration"
-	"github.com/andrewneudegg/delta/pkg/pipeline"
+	"github.com/andrewneudegg/delta/pkg/pipelines"
+	pipelineBuilder "github.com/andrewneudegg/delta/pkg/pipelines/builder"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -39,11 +42,7 @@ func Cmd() *cobra.Command {
 				configurationBytes = data
 			}
 
-			cLoader := configuration.RawConfig{
-				ConfigData: configurationBytes,
-			}
-
-			c, err := cLoader.Load()
+			c, err := configuration.FromBytes(configurationBytes)
 			if err != nil {
 				return errors.Wrap(err, "failed to load configuration from bytes")
 			}
@@ -53,16 +52,28 @@ func Cmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_ = config.ApplicationSettings
+			wg := sync.WaitGroup{}
 
-			log.Info("starting serve")
-			p, err := pipeline.BuildPipeline(config)
-			if err != nil {
-				return errors.Wrap(err, "failed to build application pipeline")
+			// Build all pipelines.
+			for _, pipe := range config.Pipeline {
+				wg.Add(1)
+				p, err := pipelines.BuildPipeline(pipe.ID, pipe.Config, pipelineBuilder.PipelineMapping())
+				if err != nil {
+					return errors.Wrapf(err, "failed to build pipeline '%s'", pipe.ID)
+				}
+
+				go func() {
+					err := p.Do(context.Background())
+
+					if err != nil {
+						log.Error(err)
+					}
+
+					wg.Done()
+				}()
 			}
-			p.Await()
-			log.Info("stopping serve")
 
+			wg.Wait()
 			return nil
 		},
 	}
