@@ -1,4 +1,4 @@
-package noop
+package generators1
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 
 // Process is simple noop.
 type Process struct {
+	Configuration
 }
 
 // ID defines what this thing is.
 func (p Process) ID() string {
-	return "examples/noop"
+	return ID
 }
 
 // Type defines what type of resource this is.
@@ -24,6 +25,19 @@ func (p Process) Type() definitions.ResourceType {
 // DoProcess will perform its function, on each collection placed into the channel
 // eventually passing a similar collection to the output.
 func (p Process) DoProcess(ctx context.Context, ch1 <-chan events.Collection, ch2 chan<- events.Collection) error {
+	go func() {
+		for {
+			select {
+			case eCol := <-ch1:
+				ch2 <- eCol
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	go RunGenerator(ctx, p.Configuration, ch2)
+
 	<-ctx.Done()
 	return nil
 }

@@ -4,21 +4,15 @@ import (
 	"fmt"
 
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
-	"github.com/andrewneudegg/delta/pkg/resources/examples/noop"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
 // BuildInputResource will construct a resource from the given inputs.
-func BuildInputResource(identifier string, data interface{}) (definitions.Input, error) {
-	// Duplicate names are prohibited.
-	m := map[string]definitions.Input{
-		noop.Input{}.ID(): noop.Input{},
-	}
-
+func BuildInputResource(identifier string, data interface{}, m map[string]definitions.Input) (definitions.Input, error) {
 	val, ok := m[identifier]
 	if !ok {
-		return nil, fmt.Errorf("source '%s' is unknown", identifier)
+		return nil, fmt.Errorf("input resource '%s' is unknown", identifier)
 	}
 
 	if err := mapstructure.Decode(data, &val); err != nil {
@@ -29,15 +23,10 @@ func BuildInputResource(identifier string, data interface{}) (definitions.Input,
 }
 
 // BuildProcessResource will construct a resource from the given process.
-func BuildProcessResource(identifier string, data interface{}) (definitions.Process, error) {
-	// Duplicate names are prohibited.
-	m := map[string]definitions.Process{
-		noop.Process{}.ID(): noop.Process{},
-	}
-
+func BuildProcessResource(identifier string, data interface{}, m map[string]definitions.Process) (definitions.Process, error) {
 	val, ok := m[identifier]
 	if !ok {
-		return nil, fmt.Errorf("source '%s' is unknown", identifier)
+		return nil, fmt.Errorf("process resource '%s' is unknown", identifier)
 	}
 
 	if err := mapstructure.Decode(data, &val); err != nil {
@@ -48,15 +37,10 @@ func BuildProcessResource(identifier string, data interface{}) (definitions.Proc
 }
 
 // BuildOutputResource will construct a resource from the given outputs.
-func BuildOutputResource(identifier string, data interface{}) (definitions.Output, error) {
-	// Duplicate names are prohibited.
-	m := map[string]definitions.Output{
-		noop.Output{}.ID(): noop.Output{},
-	}
-
+func BuildOutputResource(identifier string, data interface{}, m map[string]definitions.Output) (definitions.Output, error) {
 	val, ok := m[identifier]
 	if !ok {
-		return nil, fmt.Errorf("source '%s' is unknown", identifier)
+		return nil, fmt.Errorf("output resource '%s' is unknown", identifier)
 	}
 
 	if err := mapstructure.Decode(data, &val); err != nil {
@@ -67,15 +51,10 @@ func BuildOutputResource(identifier string, data interface{}) (definitions.Outpu
 }
 
 // BuildMetaResource will construct a resource from the given inputs.
-func BuildMetaResource(identifier string, data interface{}) (definitions.Resource, error) {
-	// Duplicate names are prohibited.
-	m := map[string]definitions.Meta{
-		noop.Meta{}.ID(): noop.Meta{},
-	}
-
+func BuildMetaResource(identifier string, data interface{}, m map[string]definitions.Meta) (definitions.Meta, error) {
 	val, ok := m[identifier]
 	if !ok {
-		return nil, fmt.Errorf("source '%s' is unknown", identifier)
+		return nil, fmt.Errorf("meta resource '%s' is unknown", identifier)
 	}
 
 	if err := mapstructure.Decode(data, &val); err != nil {

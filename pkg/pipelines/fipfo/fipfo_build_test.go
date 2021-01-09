@@ -21,35 +21,24 @@ pipeline:
   - id: pipelines/fipfo
     config:
       input:
-      - id: nest1/1
+      - id: examples/noop
         config: {}
-        nodes: 
-          - id: nest2/1
-            config: {}
-            nodes: []
-          - id: nest2/2
-            config: {}
-            nodes: []
+        nodes: []
       process:
-      - id: nest1/1
+      - id: examples/noop
         config: {}
-        nodes:
-          - id: nest2/1
-            config: {}
-            nodes: []
-          - id: nest2/2
-            config: {}
-            nodes: []
+        nodes: []
       output:
-      - id: nest1/1
+      - id: examples/noop
         config: {}
         nodes:
-          - id: nest2/1
-            config: {}
-            nodes: []
-          - id: nest2/2
-            config: {}
-            nodes: []`)
+        - id: examples/noop
+          config: {}
+          nodes: []
+        - id: examples/noop
+          config: {}
+          nodes: []
+`)
 )
 
 func TestSunshineBuild(t *testing.T) {
@@ -70,6 +59,7 @@ func TestBuildRun(t *testing.T) {
 		Pipeline{}.ID(): Pipeline{},
 	})
 	assert.Nil(t, err)
+	assert.NotNil(t, p)
 
 	go func() {
 		err := p.Do(context.TODO())
@@ -79,5 +69,5 @@ func TestBuildRun(t *testing.T) {
 		}
 	}()
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 1)
 }

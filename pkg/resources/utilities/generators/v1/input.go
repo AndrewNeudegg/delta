@@ -1,4 +1,4 @@
-package noop
+package generators1
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 
 // Input is simple noop.
 type Input struct {
+	Configuration
 }
 
 // ID defines what this thing is.
 func (i Input) ID() string {
-	return "examples/noop"
+	return ID
 }
 
 // Type defines what type of resource this is.
@@ -23,6 +24,7 @@ func (i Input) Type() definitions.ResourceType {
 
 // DoInput will accept collections of events, passing them into the channel.
 func (i Input) DoInput(ctx context.Context, ch chan<- events.Collection) error {
+	go RunGenerator(ctx, i.Configuration, ch)
 	<-ctx.Done()
 	return nil
 }
