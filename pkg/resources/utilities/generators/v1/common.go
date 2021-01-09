@@ -43,7 +43,7 @@ func RunGenerator(ctx context.Context, config Configuration, ch chan<- events.Co
 	for ctx.Err() == nil {
 		for _, col := range eCollections {
 			ch <- col
-			log.Debugf("wrote event collection with '%d' events", len(col))
+			log.Debugf("generated event collection with '%d' events", len(col))
 		}
 		time.Sleep(dur)
 	}
