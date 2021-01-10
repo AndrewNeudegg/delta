@@ -12,7 +12,7 @@ Delta is a run anywhere binary that allows you to easily dictate the flow of eve
 delta uses configuration files to specify where events come from, what should happen to them during
 processing, and where they should be sent.
 
-The specific configuration recipe that you will need will be a combination of the avalibale ingredients with some additions and some removals. For some inspiration, take a look in the [`./recipes`](./recipes/) directory.
+The specific configuration recipe that you will need will be a combination of the avalibale ingredients with some additions and some removals. For some inspiration, take a look in the [`./recipes`](https://github.com/AndrewNeudegg/delta/tree/main/recipies/simulation) directory.
 
 To get the latest binaries head over to the [releases](https://github.com/AndrewNeudegg/delta/releases) page or pull
 the docker image `docker run -it andrewneudegg/delta`.
@@ -23,190 +23,97 @@ the docker image `docker run -it andrewneudegg/delta`.
   - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
   - [TL;DR (Example Recipes)](#tldr-example-recipes)
-    - [Simple](#simple)
-    - [Meta blocks](#meta-blocks)
-    - [Encrypting Events](#encrypting-events)
-    - [Ping Pong](#ping-pong)
-      - [Ping](#ping)
-      - [Pong](#pong)
-      - [Output](#output)
+    - [HTTP Server](#http-server)
+    - [Encryption](#encryption)
+    - [Performance](#performance)
   - [License](#license)
 
 ## TL;DR (Example Recipes)
 
-### Simple
-
-Event flows are defined in yaml configuration:
+### HTTP Server
 
 ```yaml
 applicationSettings: {}
-sourceConfigurations:
-  - name: http/simple
+pipeline:
+  # This first pipeline generates and emits http events.
+  - id: pipelines/fipfo
     config:
-      ListenAddr: :8080
-      MaxBodySize: 512
-relayConfigs:
-distributorConfigurations:
-  - name: http/direct
+      input:
+        - id: utilities/generators/v1
+          config:
+            interval: 10s
+            numberEvents: 10000
+            numberCollections: 1
+      output:
+        - id: http/v1
+          config:
+            targetAddress: http://localhost:8080
+
+  # This second pipeline consumes those events and writes to stdout.
+  - id: pipelines/fipfo
     config:
-      Addr: http://localhost:5051
+      input:
+        - id: http/v1
+          config:
+            listenAddress: :8080
+            maxBodySize: 1000000 # 1mb
+      output:
+        - id: utilities/performance/v1
+          config:
+            sampleWindow: 60s
+          nodes:
+            - id: utilities/console/v1
 ```
 
-When run with `delta serve -c ./config.yaml` will start a HTTP server on port 8080 and forward all events on to `http://localhost:5051`.
-
-### Meta blocks
-
-Meta blocks wrap one or more `source`, `relay`, or `distributor`. A source produces events, a relay moves or modifies events, and a distributor broadcasts an event to its destinations.
-
-You can run this sample with `delta serve -c ./config.yaml`.
+### Encryption
 
 ```yaml
 applicationSettings: {}
-sourceConfigurations:
-  - name: http/simple
+pipeline:
+  - id: pipelines/fipfo
     config:
-      ListenAddr: :8080
-      MaxBodySize: 512
-distributorConfigurations:
-  - name: meta/chaos/simple
-    config:
-      failChance: 0.5
-    subConfigs:
-      - name: stdout
+      input:
+        # The crypto resource wraps the generator resource.
+        - id: utilities/crypto/v1
+          config:
+            mode: encrypt
+            password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd
+          nodes:
+            - id: utilities/generators/v1
+              config:
+                interval: 1s
+                numberEvents: 1
+                numberCollections: 1
+      output:
+        # Decrypt the events before writing the output to console.
+        - id: utilities/crypto/v1
+          config:
+            mode: decrypt
+            password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd
+          nodes:
+            - id: utilities/console/v1
 ```
 
-This block causes events to have 50% chance to never be distributed...
-
-### Encrypting Events
-
-You can encrypt events in the flow by using a config such as:
+### Performance
 
 ```yaml
 applicationSettings: {}
-sourceConfigurations:
-  - name: http/simple
+pipeline:
+  - id: pipelines/fipfo
     config:
-      ListenAddr: :8080
-      MaxBodySize: 512
-relayConfigs:
-  # Encrypt incomming data before passing it on.
-  - name: crypto/symmetric-simple
-    config:
-      Mode: encrypt
-      Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
-      # EnvVar: EVENT_ENCYRPTION_PHRASE
-
-  - name: memory
-    config: {}
-
-  # Decrypt data before distributing it.
-  - name: crypto/symmetric-simple
-    config:
-      Mode: decrypt
-      Password: iddX0DQKGMl7LszqdDKUL6aFVvMGAtwd # do not hardcode secrets in production!
-      # EnvVar: EVENT_ENCYRPTION_PHRASE
-
-distributorConfigurations:
-  - name: stdout
-```
-
-`EnvVar` overrides `Password`, populating the password with the value of the given environment variable. 
-
-### Ping Pong
-
-In these samples events are generated by a simulator and passed to another instance of delta. These are then passed into two `distributors`. In `ping.yaml` the source `source/simulator/simple` produces `25` events every `0.1s`. These are passed through a memory relay (a NoOp). Then events are distributed to two distributors. *NB* the `memory` relay is only for demonstration purposes.
-
-The first `http/direct` makes a HTTP POST to the given address. The second records the throughput of the system.
-
-#### Ping
-
-```yaml
-applicationSettings: {}
-sourceConfigurations:
-  - name: source/simulator/simple
-    config:
-      Routines: 1
-      Interval: 0.1s
-      Num: 25
-relayConfigs:
-  - name: memory
-    config: {}
-distributorConfigurations:
-  - name: http/direct
-    config:
-      Addr: http://127.0.0.1:8080
-  - name: distributor/performance
-    config:
-      metricsPollInterval: 60s
-```
-
-#### Pong
-
-`pong.yaml` starts a HTTP server that is POSTed to by `ping.yaml`, events are then fed directly through to the performance measurer.
-
-```yaml
-applicationSettings: {}
-sourceConfigurations:
-  - name: http/simple
-    config:
-      ListenAddr: :8080
-      MaxBodySize: 51200
-relayConfigs:
-  - name: memory
-    config: {}
-distributorConfigurations:
-  - name: distributor/performance
-    config:
-      metricsPollInterval: 60s
-```
-
-#### Output
-
-Ping:
-```
-delta serve -c ./recipies/pingpong/ping.yaml
-INFO[2021-01-02T23:11:03Z] starting serve
-INFO[2021-01-02T23:11:03Z] found '1' sources
-INFO[2021-01-02T23:11:03Z] found '1' relays
-INFO[2021-01-02T23:11:03Z] found '2' distributors
-INFO[2021-01-02T23:11:03Z] launching source 'source/simulator'
-INFO[2021-01-02T23:11:03Z] running event simulator with batch size '25', '1' goroutines and a delay of '100ms'
-INFO[2021-01-02T23:11:03Z] launching relay 'relay/memory'
-INFO[2021-01-02T23:11:03Z] launching distributor 'distributor/http/direct'
-INFO[2021-01-02T23:11:03Z] launching distributor 'distributor/performance'
-INFO[2021-01-02T23:11:03Z] starting in-memory relay
-WARN[2021-01-02T23:11:13Z] Performing at '244.994723' tx/s (2450 transactions / 10.000215 seconds)
-WARN[2021-01-02T23:11:23Z] Performing at '242.481160' tx/s (2425 transactions / 10.000777 seconds)
-WARN[2021-01-02T23:11:33Z] Performing at '244.989578' tx/s (2450 transactions / 10.000425 seconds)
-WARN[2021-01-02T23:11:43Z] Performing at '234.993939' tx/s (2350 transactions / 10.000258 seconds)
-WARN[2021-01-02T23:11:53Z] Performing at '234.967940' tx/s (2350 transactions / 10.001364 seconds)
-WARN[2021-01-02T23:12:03Z] Performing at '194.941444' tx/s (1950 transactions / 10.003004 seconds)
-WARN[2021-01-02T23:12:14Z] Performing at '213.589305' tx/s (2140 transactions / 10.019228 seconds)
-```
-
-Pong:
-
-```sh
-delta serve -c ./recipies/pingpong/pong.yaml
-INFO[2021-01-02T23:11:01Z] starting serve
-INFO[2021-01-02T23:11:01Z] found '1' sources
-INFO[2021-01-02T23:11:01Z] found '1' relays
-INFO[2021-01-02T23:11:01Z] found '1' distributors
-INFO[2021-01-02T23:11:01Z] launching source 'source/SimpleHTTPSink'
-INFO[2021-01-02T23:11:01Z] starting sink server at ':8080'
-INFO[2021-01-02T23:11:01Z] launching relay 'relay/memory'
-INFO[2021-01-02T23:11:01Z] starting in-memory relay
-INFO[2021-01-02T23:11:01Z] launching distributor 'distributor/performance'
-WARN[2021-01-02T23:11:11Z] Performing at '179.995845' tx/s (1800 transactions / 10.000231 seconds)
-WARN[2021-01-02T23:11:21Z] Performing at '244.993908' tx/s (2450 transactions / 10.000249 seconds)
-WARN[2021-01-02T23:11:31Z] Performing at '242.497271' tx/s (2425 transactions / 10.000113 seconds)
-WARN[2021-01-02T23:11:41Z] Performing at '237.472136' tx/s (2375 transactions / 10.001173 seconds)
-WARN[2021-01-02T23:11:51Z] Performing at '232.699487' tx/s (2327 transactions / 10.000022 seconds)
-WARN[2021-01-02T23:12:01Z] Performing at '204.491525' tx/s (2045 transactions / 10.000414 seconds)
-WARN[2021-01-02T23:12:11Z] Performing at '214.979328' tx/s (2150 transactions / 10.000962 seconds)
-WARN[2021-01-02T23:12:21Z] Performing at '212.459812' tx/s (2125 transactions / 10.001892 seconds)
-WARN[2021-01-02T23:12:31Z] Performing at '214.996662' tx/s (2150 transactions / 10.000155 seconds)
-WARN[2021-01-02T23:12:41Z] Performing at '209.904806' tx/s (2100 transactions / 10.004535 seconds)
+      input:
+        # Wrap a resource with a performance measuring resource.
+        - id: utilities/performance/v1
+          config:
+            sampleWindow: 10s
+          nodes:
+            - id: utilities/generators/v1
+              config:
+                interval: 1s
+                numberEvents: 1000
+                numberCollections: 1000
+      output:
+        - id: utilities/console/v1
 ```
 
 ## License

@@ -3,6 +3,7 @@ pipeline:
   - id: pipelines/fipfo
     config:
       input:
+        # Wrap a resource with a performance measuring resource.
         - id: utilities/performance/v1
           config:
             sampleWindow: 10s

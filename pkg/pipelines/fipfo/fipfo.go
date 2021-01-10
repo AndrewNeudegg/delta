@@ -63,7 +63,7 @@ func (f Pipeline) inputs(ctx context.Context) (chan events.Collection, error) {
 		}
 
 		go func(i resourceDefinitions.Input, ch chan events.Collection) {
-			log.Infof("launching input '%s'", i.ID())
+			log.Infof("starting input '%s'", i.ID())
 			err := i.DoInput(context.TODO(), ch)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do input"))
@@ -118,7 +118,7 @@ func (f Pipeline) processes(ch chan events.Collection) (chan events.Collection, 
 		thisRelayOutputChan := make(chan events.Collection)
 
 		go func(p resourceDefinitions.Process, inCh <-chan events.Collection, outCh chan<- events.Collection) {
-			log.Infof("launching process '%s'", p.ID())
+			log.Infof("starting process '%s'", p.ID())
 			err := p.DoProcess(context.TODO(), inCh, outCh)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do process"))
@@ -168,7 +168,7 @@ func (f Pipeline) outputs(ctx context.Context, ch chan events.Collection) error 
 		}
 
 		go func(o resourceDefinitions.Output, ch chan events.Collection) {
-			log.Infof("launching output '%s'", o.ID())
+			log.Infof("starting output '%s'", o.ID())
 			err := o.DoOutput(context.TODO(), ch)
 			if err != nil {
 				log.Error(errors.Wrap(err, "failed to do distributor"))

@@ -6,6 +6,7 @@ import (
 	http1 "github.com/andrewneudegg/delta/pkg/resources/http/v1"
 	chaos1 "github.com/andrewneudegg/delta/pkg/resources/utilities/chaos/v1"
 	console1 "github.com/andrewneudegg/delta/pkg/resources/utilities/console/v1"
+	crypto1 "github.com/andrewneudegg/delta/pkg/resources/utilities/crypto/v1"
 	generators1 "github.com/andrewneudegg/delta/pkg/resources/utilities/generators/v1"
 	performance1 "github.com/andrewneudegg/delta/pkg/resources/utilities/performance/v1"
 )
@@ -19,6 +20,7 @@ func InputMapping() map[string]definitions.Input {
 		performance1.Input{}.ID(): performance1.Input{},
 		http1.Input{}.ID():        &http1.Input{},
 		chaos1.Input{}.ID():       chaos1.Input{},
+		crypto1.Input{}.ID():      crypto1.Input{},
 	}
 }
 
@@ -31,6 +33,7 @@ func ProcessMapping() map[string]definitions.Process {
 		performance1.Process{}.ID(): performance1.Process{},
 		http1.Process{}.ID():        http1.Process{},
 		chaos1.Process{}.ID():       chaos1.Process{},
+		crypto1.Process{}.ID():      crypto1.Process{},
 	}
 }
 
@@ -43,6 +46,7 @@ func OutputMapping() map[string]definitions.Output {
 		performance1.Output{}.ID(): performance1.Output{},
 		http1.Output{}.ID():        http1.Output{},
 		chaos1.Output{}.ID():       chaos1.Output{},
+		crypto1.Output{}.ID():      crypto1.Output{},
 	}
 }
 
@@ -55,5 +59,6 @@ func MetaMapping() map[string]definitions.Meta {
 		performance1.Meta{}.ID(): performance1.Meta{},
 		http1.Meta{}.ID():        http1.Meta{},
 		chaos1.Meta{}.ID():       chaos1.Meta{},
+		crypto1.Meta{}.ID():      crypto1.Meta{},
 	}
 }
