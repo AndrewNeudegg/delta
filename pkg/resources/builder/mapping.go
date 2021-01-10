@@ -4,6 +4,7 @@ import (
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
 	"github.com/andrewneudegg/delta/pkg/resources/examples/noop"
 	http1 "github.com/andrewneudegg/delta/pkg/resources/http/v1"
+	chaos1 "github.com/andrewneudegg/delta/pkg/resources/utilities/chaos/v1"
 	console1 "github.com/andrewneudegg/delta/pkg/resources/utilities/console/v1"
 	generators1 "github.com/andrewneudegg/delta/pkg/resources/utilities/generators/v1"
 	performance1 "github.com/andrewneudegg/delta/pkg/resources/utilities/performance/v1"
@@ -17,6 +18,7 @@ func InputMapping() map[string]definitions.Input {
 		console1.Input{}.ID():     console1.Input{},
 		performance1.Input{}.ID(): performance1.Input{},
 		http1.Input{}.ID():        &http1.Input{},
+		chaos1.Input{}.ID():       chaos1.Input{},
 	}
 }
 
@@ -28,6 +30,7 @@ func ProcessMapping() map[string]definitions.Process {
 		console1.Process{}.ID():     console1.Process{},
 		performance1.Process{}.ID(): performance1.Process{},
 		http1.Process{}.ID():        http1.Process{},
+		chaos1.Process{}.ID():       chaos1.Process{},
 	}
 }
 
@@ -39,6 +42,7 @@ func OutputMapping() map[string]definitions.Output {
 		console1.Output{}.ID():     console1.Output{},
 		performance1.Output{}.ID(): performance1.Output{},
 		http1.Output{}.ID():        http1.Output{},
+		chaos1.Output{}.ID():       chaos1.Output{},
 	}
 }
 
@@ -50,5 +54,6 @@ func MetaMapping() map[string]definitions.Meta {
 		console1.Meta{}.ID():     console1.Meta{},
 		performance1.Meta{}.ID(): performance1.Meta{},
 		http1.Meta{}.ID():        http1.Meta{},
+		chaos1.Meta{}.ID():       chaos1.Meta{},
 	}
 }

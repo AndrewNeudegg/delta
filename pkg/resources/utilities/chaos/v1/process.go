@@ -1,20 +1,20 @@
-package performance1
+package noop
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Process is simple noop.
 type Process struct {
-	p            definitions.Process
-	sampleWindow time.Duration
+	p definitions.Process
+
+	failChance float32
 }
 
 // ID defines what this thing is.
@@ -31,12 +31,10 @@ func (p Process) Type() definitions.ResourceType {
 // eventually passing a similar collection to the output.
 func (p Process) DoProcess(ctx context.Context, ch1 <-chan events.Collection, ch2 chan<- events.Collection) error {
 	if p.p == nil {
-		return errors.Errorf("'%s' cannot be used as an process resource directly", ID)
+		return fmt.Errorf("'%s' does not support input resource", ID)
 	}
 	log.Infof("starting '%s' DoProcess proxy for '%s'", ID, p.p.ID())
 
-	// TODO!!
 
-	<-ctx.Done()
-	return nil
+	return p.p.DoProcess(ctx, ch1, ch2)
 }

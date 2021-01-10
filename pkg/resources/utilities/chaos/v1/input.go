@@ -1,20 +1,20 @@
-package performance1
+package noop
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// Input is simple wrapper around another input resource.
+// Input is simple noop.
 type Input struct {
-	i            definitions.Input
-	sampleWindow time.Duration
+	i definitions.Input
+
+	failChance float32
 }
 
 // ID defines what this thing is.
@@ -30,36 +30,24 @@ func (i Input) Type() definitions.ResourceType {
 // DoInput will accept collections of events, passing them into the channel.
 func (i Input) DoInput(ctx context.Context, ch chan<- events.Collection) error {
 	if i.i == nil {
-		return errors.Errorf("'%s' cannot be used as an input resource directly", ID)
+		return fmt.Errorf("'%s' does not support input resource", ID)
 	}
 	log.Infof("starting '%s' DoInput proxy for '%s'", ID, i.i.ID())
 
 	proxyCh := make(chan events.Collection)
-	count := 0
-	lastTime := time.Now()
 
 	go func(chIn chan events.Collection, chOut chan<- events.Collection) {
 		for {
 			select {
 			case eCol := <-chIn:
-				count++
-				chOut <- eCol
+				if isLucky(i.failChance) {
+					chOut <- eCol
+				}else{
+					log.Debugf("'%s', '%d' events were unlucky and have been dropped", ID, len(eCol))
+				}
 			}
 		}
 	}(proxyCh, ch)
-
-	go func() {
-		for {
-			time.Sleep(i.sampleWindow)
-
-			tDiff := time.Now().Sub(lastTime)
-			metricFrame := float64(count) / tDiff.Seconds()
-			log.Warnf("'%s' at '%f' tx/s (%d transactions / %f seconds)", i.i.ID(), metricFrame, count, tDiff.Seconds())
-
-			lastTime = time.Now()
-			count = 0
-		}
-	}()
 
 	return i.i.DoInput(ctx, proxyCh)
 }

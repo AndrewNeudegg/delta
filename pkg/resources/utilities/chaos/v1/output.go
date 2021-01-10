@@ -1,20 +1,20 @@
-package performance1
+package noop
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/andrewneudegg/delta/pkg/events"
 	"github.com/andrewneudegg/delta/pkg/resources/definitions"
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Output is simple noop.
 type Output struct {
-	o            definitions.Output
-	sampleWindow time.Duration
+	o definitions.Output
+
+	failChance float32
 }
 
 // ID defines what this thing is.
@@ -30,36 +30,24 @@ func (o Output) Type() definitions.ResourceType {
 // DoOutput will perform its function on each collection placed into the channel.
 func (o Output) DoOutput(ctx context.Context, ch <-chan events.Collection) error {
 	if o.o == nil {
-		return errors.Errorf("'%s' cannot be used as an output resource directly", ID)
+		return fmt.Errorf("'%s' does not support input resource", ID)
 	}
 	log.Infof("starting '%s' DoOutput proxy for '%s'", ID, o.o.ID())
 
 	proxyCh := make(chan events.Collection)
-	count := 0
-	lastTime := time.Now()
 
-	go func(chIn <-chan events.Collection, chOut chan events.Collection) {
+	go func(chIn chan events.Collection, chOut <-chan events.Collection) {
 		for {
 			select {
-			case eCol := <-chIn:
-				count++
-				chOut <- eCol
+			case eCol := <-chOut:
+				if isLucky(o.failChance) {
+					chIn <- eCol
+				} else {
+					log.Debugf("'%s', '%d' events were unlucky and have been dropped", ID, len(eCol))
+				}
 			}
 		}
-	}(ch, proxyCh)
-
-	go func() {
-		for {
-			time.Sleep(o.sampleWindow)
-
-			tDiff := time.Now().Sub(lastTime)
-			metricFrame := float64(count) / tDiff.Seconds()
-			log.Warnf("'%s' at '%f' tx/s (%d transactions / %f seconds)", o.o.ID(), metricFrame, count, tDiff.Seconds())
-
-			lastTime = time.Now()
-			count = 0
-		}
-	}()
+	}(proxyCh, ch)
 
 	return o.o.DoOutput(ctx, proxyCh)
 }

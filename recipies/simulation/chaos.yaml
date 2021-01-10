@@ -1,0 +1,16 @@
+applicationSettings: {}
+pipeline:
+  - id: pipelines/fipfo
+    config:
+      input:
+        - id: utilities/chaos/v1
+          config:
+            failChance: 0.5
+          nodes:
+            - id: utilities/generators/v1
+              config:
+                interval: 1s
+                numberEvents: 1
+                numberCollections: 1
+      output:
+        - id: utilities/console/v1
