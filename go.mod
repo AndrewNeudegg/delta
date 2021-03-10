@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v0.0.7
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e // indirect
