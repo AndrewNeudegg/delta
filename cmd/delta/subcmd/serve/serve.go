@@ -3,6 +3,7 @@ package serve
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -26,8 +27,8 @@ func Cmd() *cobra.Command {
 		Short: "serve event routing as described by the given configuration",
 		Long:  `serve will orchestrate whatever recipe has been described by your configuration.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-
-			configurationBytes := []byte{}
+			
+			var configurationBytes []byte
 			if configurationPath == "-" {
 				scanner := bufio.NewScanner(os.Stdin)
 				if !scanner.Scan() {
@@ -35,6 +36,10 @@ func Cmd() *cobra.Command {
 				}
 				configurationBytes = scanner.Bytes()
 			} else {
+				if configurationPath == "" {
+					return fmt.Errorf("no configuration file supplied")
+				}
+
 				data, err := ioutil.ReadFile(configurationPath)
 				if err != nil {
 					return err
